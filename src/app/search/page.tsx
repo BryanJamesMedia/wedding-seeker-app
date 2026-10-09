@@ -111,12 +111,12 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
             )}
 
             {response.lockedCount > 0 ? (
-              <div className="mt-4 rounded-2xl border border-gold/40 bg-[#fbf1df] p-6 text-center">
+              <div className="mt-4 rounded-2xl border border-accent/20 bg-accent-soft p-6 text-center">
                 <p className="font-serif text-2xl font-semibold">+{response.lockedCount} more matches</p>
                 <p className="mt-1 text-sm text-muted">Wedding Seeker Plus shows every match, plus contact details, Save and Connect.</p>
                 <Link
                   href={viewer.userId ? `/upgrade?return=${encodeURIComponent(`/search?${toQueryString(params)}`)}` : `/search?${toQueryString(params)}&signup=1`}
-                  className="mt-3 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-white"
+                  className="mt-3 inline-block rounded-lg btn-coral px-5 py-2.5"
                 >
                   {viewer.userId ? "Upgrade to see all" : "Sign up to see all"}
                 </Link>

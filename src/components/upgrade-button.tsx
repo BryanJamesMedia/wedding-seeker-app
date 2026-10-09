@@ -20,7 +20,7 @@ export function UpgradeButton({ continueUrl, label = "Upgrade to Plus" }: { cont
   }
   return (
     <div>
-      <button type="button" onClick={go} disabled={loading} className="w-full rounded-full bg-accent px-6 py-3 font-medium text-white hover:bg-accent-strong disabled:opacity-60">
+      <button type="button" onClick={go} disabled={loading} className="w-full rounded-lg btn-coral px-6 py-3 disabled:opacity-60">
         {loading ? "Opening checkout…" : label}
       </button>
       {error ? <p role="alert" className="mt-2 text-sm text-red-700">{error}</p> : null}
