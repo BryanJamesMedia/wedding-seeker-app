@@ -48,10 +48,10 @@ export async function upsertWeddingProfile(userId: string, p: Partial<WeddingPro
   await query(
     `INSERT INTO wedding_profiles (user_id, partner1_name, partner2_name, contact_email, contact_phone, wedding_date,
        target_month, target_year, location_text, guest_count, budget_range, settings, vibe, vendors_needed)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,coalesce($12,'{}'),$13,coalesce($14,'{}'))
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,coalesce($12::text[],'{}'),$13,coalesce($14::text[],'{}'))
      ON CONFLICT (user_id) DO UPDATE SET partner1_name=$2, partner2_name=$3, contact_email=$4, contact_phone=$5,
        wedding_date=$6, target_month=$7, target_year=$8, location_text=$9, guest_count=$10, budget_range=$11,
-       settings=coalesce($12,'{}'), vibe=$13, vendors_needed=coalesce($14,'{}'), updated_at=now()`,
+       settings=coalesce($12::text[],'{}'), vibe=$13, vendors_needed=coalesce($14::text[],'{}'), updated_at=now()`,
     [
       userId, p.partner1_name ?? null, p.partner2_name ?? null, p.contact_email ?? null, p.contact_phone ?? null,
       p.wedding_date || null, p.target_month ?? null, p.target_year ?? null, p.location_text ?? null,

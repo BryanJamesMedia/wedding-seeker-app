@@ -77,7 +77,6 @@ export function button(href: string, label: string, color = "#9c4f3c"): string {
 }
 
 export function sendMagicLinkEmail(to: string, url: string) {
-  if (process.env.NODE_ENV !== "production") console.info(`[email] magic link for ${to}: ${url}`);
   return sendEmail({
     to,
     subject: "Your Wedding Seeker sign-in link",

@@ -28,8 +28,8 @@ export function openUpgradeModal(action?: PendingAction) {
 }
 
 /** Where the couple returns after sign-up + checkout, with the pending action completed. */
-function continueUrl(action?: PendingAction): string {
-  const params = new URLSearchParams({ return: window.location.pathname + window.location.search });
+function continueUrl(action?: PendingAction, returnTo?: string): string {
+  const params = new URLSearchParams({ return: returnTo ?? window.location.pathname + window.location.search });
   if (action) {
     params.set("action", action.kind);
     params.set("type", action.listingType);
@@ -94,14 +94,18 @@ function CloseButton() {
   );
 }
 
-function AuthStep({
+export function AuthStep({
   reason,
   action,
   googleEnabled,
+  returnTo,
+  inline = false,
 }: {
   reason: "signup" | "save" | "connect";
   action?: PendingAction;
   googleEnabled: boolean;
+  returnTo?: string;
+  inline?: boolean;
 }) {
   const [email, setEmail] = useState("");
   const [terms, setTerms] = useState(false);
@@ -110,7 +114,7 @@ function AuthStep({
   const [error, setError] = useState<string | null>(null);
 
   const callbackURL = () => {
-    const url = new URL(continueUrl(action), window.location.origin);
+    const url = new URL(continueUrl(action, returnTo), window.location.origin);
     url.searchParams.set("terms", "1");
     if (marketing) url.searchParams.set("marketing", "1");
     return url.pathname + url.search;
@@ -141,7 +145,7 @@ function AuthStep({
 
   return (
     <div className="relative p-6">
-      <CloseButton />
+      {inline ? null : <CloseButton />}
       <h2 id="gate-title" className="pr-8 font-serif text-2xl font-semibold">
         {action ? HEADLINES[reason].replace("this vendor", action.name) : HEADLINES[reason]}
       </h2>
