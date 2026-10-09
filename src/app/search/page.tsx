@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SearchPanel } from "@/components/search-panel";
 import { ResultCard } from "@/components/result-card";
+import { SaveSearchButton } from "@/components/save-search-button";
 import { getConfig } from "@/lib/config";
 import { getViewer } from "@/lib/session";
 import { getUserStates } from "@/lib/saves";
@@ -62,6 +63,12 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                   <p className="text-sm text-muted">{response.topMatches} top matches for your description</p>
                 ) : null}
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <SaveSearchButton
+                  viewer={actionViewer}
+                  query={toQueryString({ ...params, page: undefined })}
+                  defaultName={[params.categories.join(", ") || "All", response.location?.label].filter(Boolean).join(" near ")}
+                />
               <nav aria-label="Sort results" className="flex gap-1 text-sm">
                 {SORT_OPTIONS.filter((s) => s !== "best" || response.usedDescription).map((s) => (
                   <Link
@@ -74,6 +81,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                   </Link>
                 ))}
               </nav>
+              </div>
             </div>
 
             {response.results.length === 0 ? (
