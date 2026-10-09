@@ -14,7 +14,7 @@ export const LISTING_FIELDS = [
   "capacity_max", "capacity_notes", "price_min", "price_max", "price_notes", "services",
   "amenities", "parking", "alcohol_policy", "catering_policy", "accessibility", "hours",
   "year_established", "reservation_instructions", "photos", "status", "google_id",
-  "account_ref", "pinecone_id", "embedding_updated_at", "created_at", "updated_at",
+  "account_ref", "embedding_updated_at", "created_at", "updated_at",
   "source_url", "event_url",
 ] as const;
 
@@ -68,7 +68,6 @@ export const DEFAULT_FIELD_VISIBILITY: Record<ListingField, FieldTier> = {
   status: "hidden",
   google_id: "hidden",
   account_ref: "hidden",
-  pinecone_id: "hidden",
   embedding_updated_at: "hidden",
   created_at: "hidden",
   updated_at: "hidden",

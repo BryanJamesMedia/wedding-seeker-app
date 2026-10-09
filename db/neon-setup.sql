@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS venues (
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'hidden', 'closed')),
   google_id text,
   account_ref text,
-  pinecone_id text,
   embedding_updated_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -125,7 +124,6 @@ CREATE TABLE IF NOT EXISTS vendors (
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('pending', 'active', 'hidden', 'closed')),
   google_id text,
   account_ref text,
-  pinecone_id text,
   embedding_updated_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -443,3 +441,9 @@ CREATE TABLE IF NOT EXISTS app_config (
   value jsonb NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+
+-- ===== 0003_drop_pinecone.sql =====
+-- Vectors live in Neon pgvector (description_embedding / vibe_embedding); Pinecone is not used.
+ALTER TABLE venues DROP COLUMN IF EXISTS pinecone_id;
+ALTER TABLE vendors DROP COLUMN IF EXISTS pinecone_id;
