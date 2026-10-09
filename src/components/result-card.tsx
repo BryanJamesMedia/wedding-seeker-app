@@ -29,7 +29,7 @@ export function ResultCard({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           {result.matchLabel ? (
-            <span className="rounded-full bg-[#eef2ef] px-2 py-0.5 text-xs font-medium text-sage">{result.matchLabel}</span>
+            <span className="rounded-full bg-[#e7f3ee] px-2 py-0.5 text-xs font-medium text-sage">{result.matchLabel}</span>
           ) : null}
           <span className="text-xs uppercase tracking-wide text-muted">{result.category}</span>
         </div>

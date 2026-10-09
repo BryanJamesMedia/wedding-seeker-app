@@ -223,7 +223,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
               )}
             </ul>
             {!viewer.paid ? (
-              <Link href={viewer.userId ? `/upgrade?return=${encodeURIComponent(listing.href)}` : `${listing.href}?signup=1`} className="mt-3 block rounded-full bg-accent px-4 py-2 text-center text-sm font-medium text-white">
+              <Link href={viewer.userId ? `/upgrade?return=${encodeURIComponent(listing.href)}` : `${listing.href}?signup=1`} className="mt-3 block rounded-lg btn-coral px-4 py-2 text-center text-sm">
                 Unlock contact details
               </Link>
             ) : null}

@@ -130,7 +130,7 @@ function ConnectModal({ listingType, listingId }: { listingType: "venue" | "vend
             <div className="sm:col-span-2"><label className={label} htmlFor="c-msg">Message (optional)</label><textarea id="c-msg" rows={3} maxLength={2000} className={field} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Anything they should know?" /></div>
             {error ? <p role="alert" className="text-sm text-red-700 sm:col-span-2">{error}</p> : null}
             <p className="text-xs text-muted sm:col-span-2">Your email and phone are only shared if the vendor says they&apos;re interested.</p>
-            <button type="submit" disabled={state === "sending"} className="rounded-full bg-accent px-6 py-3 font-medium text-white sm:col-span-2 disabled:opacity-60">
+            <button type="submit" disabled={state === "sending"} className="rounded-lg btn-coral px-6 py-3 sm:col-span-2 disabled:opacity-60">
               {state === "sending" ? "Sending…" : "Send request"}
             </button>
           </form>

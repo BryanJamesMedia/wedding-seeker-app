@@ -201,7 +201,7 @@ export function AuthStep({
             <button
               type="submit"
               disabled={status === "sending"}
-              className="w-full rounded-full bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-strong disabled:opacity-60"
+              className="w-full rounded-lg btn-coral px-4 py-3 text-sm disabled:opacity-60"
             >
               {status === "sending" ? "Sending…" : "Email me a sign-in link"}
             </button>
@@ -275,7 +275,7 @@ export function PlanCard({
         type="button"
         onClick={onUpgrade}
         disabled={loading}
-        className="mt-5 w-full rounded-full bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-strong disabled:opacity-60"
+        className="mt-5 w-full rounded-lg btn-coral px-4 py-3 text-sm disabled:opacity-60"
       >
         {loading ? "Opening checkout…" : "Continue to secure checkout"}
       </button>

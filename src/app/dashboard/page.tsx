@@ -24,7 +24,7 @@ export default async function DashboardHome() {
     <div className="space-y-6">
       <h1 className="font-serif text-4xl font-semibold">Welcome{user.name ? `, ${user.name.split(" ")[0]}` : ""}</h1>
       {!paid ? (
-        <div className="rounded-2xl border border-gold/40 bg-[#fbf1df] p-6">
+        <div className="rounded-2xl border border-accent/20 bg-accent-soft p-6">
           <h2 className="font-serif text-2xl font-semibold">Unlock Saved and Connect</h2>
           <p className="mt-1 text-sm text-muted">Upgrade to see contact details, save favorites, and send your wedding details to vendors in one click.</p>
           <div className="mt-4 max-w-xs"><UpgradeButton continueUrl="/auth/continue?return=%2Fdashboard" /></div>

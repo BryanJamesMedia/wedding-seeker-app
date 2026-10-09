@@ -14,7 +14,7 @@ export function AuthButtons({ signedIn }: { signedIn: boolean }) {
           await signOut();
           router.refresh();
         }}
-        className="rounded-full px-3 py-2 text-muted hover:text-foreground"
+        className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent"
       >
         Sign out
       </button>
@@ -24,7 +24,7 @@ export function AuthButtons({ signedIn }: { signedIn: boolean }) {
     <button
       type="button"
       onClick={() => openAuthModal({ reason: "signup" })}
-      className="rounded-full bg-accent px-4 py-2 font-medium text-white hover:bg-accent-strong"
+      className="rounded-lg btn-coral px-4 py-2"
     >
       Sign up
     </button>

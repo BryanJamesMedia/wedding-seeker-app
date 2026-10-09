@@ -75,7 +75,7 @@ export function ListingActions({
         type="button"
         onClick={connect}
         disabled={connected}
-        className={`inline-flex items-center gap-1.5 rounded-full ${pad} ${connected ? "border border-sage/40 bg-[#eef2ef] text-sage" : "bg-accent text-white hover:bg-accent-strong"}`}
+        className={`inline-flex items-center gap-1.5 rounded-full ${pad} ${connected ? "border border-sage/40 bg-[#e7f3ee] text-sage" : "btn-coral"}`}
       >
         <Send className="size-4" aria-hidden />
         {connected ? "Connect sent" : "Connect"}

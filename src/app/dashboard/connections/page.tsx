@@ -6,7 +6,7 @@ import { STATUS_LABELS } from "@/lib/connections";
 import { formatDate } from "@/lib/utils";
 
 const TONE: Record<string, string> = {
-  responded_interested: "bg-[#eef2ef] text-sage",
+  responded_interested: "bg-[#e7f3ee] text-sage",
   responded_unavailable: "bg-border text-muted",
   bounced: "bg-red-50 text-red-700",
 };

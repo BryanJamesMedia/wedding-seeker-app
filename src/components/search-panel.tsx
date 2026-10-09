@@ -203,7 +203,7 @@ export function SearchPanel({
       ) : null}
 
       {error ? <p role="alert" className="mt-3 text-sm text-red-700">{error}</p> : null}
-      <button type="submit" className="mt-4 w-full rounded-full bg-accent px-6 py-3 font-medium text-white hover:bg-accent-strong">
+      <button type="submit" className="mt-4 w-full rounded-lg btn-coral px-6 py-3">
         Search
       </button>
     </form>
