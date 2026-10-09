@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { after } from "next/server";
+import { logSearch, timedSearch } from "@/lib/search-log";
 import { SearchPanel } from "@/components/search-panel";
 import { ResultCard } from "@/components/result-card";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { getConfig } from "@/lib/config";
 import { getViewer } from "@/lib/session";
 import { getUserStates } from "@/lib/saves";
-import { listCategories, parseSearchParams, searchListings, SORT_OPTIONS, toQueryString } from "@/lib/search";
+import { listCategories, parseSearchParams, SORT_OPTIONS, toQueryString } from "@/lib/search";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
 
@@ -17,7 +19,9 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const params = parseSearchParams(raw);
   const [viewer, config, categories] = await Promise.all([getViewer(), getConfig(), listCategories()]);
   const ready = params.categories.length > 0 && params.location;
-  const response = ready ? await searchListings(params, viewer) : null;
+  const timed = ready ? await timedSearch(params, viewer) : null;
+  const response = timed?.response ?? null;
+  if (timed) after(() => logSearch(params, timed.response, viewer.userId, timed.durationMs));
   const states =
     response && viewer.userId
       ? await getUserStates(viewer.userId, response.results.map((r) => ({ listingType: r.listingType, listingId: r.listingId })))
