@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wedding Seeker — Couples App
 
-## Getting Started
+Search-first venue and vendor directory for couples: natural-language + filtered search, gated listing details, Plus upgrade (Stripe), saves, Connect requests to vendors, and a dashboard.
 
-First, run the development server:
+Stack: Next.js 16 (App Router) on Vercel · Neon Postgres with pgvector + PostGIS · Better Auth (magic link, Google) · Stripe · Resend · OpenAI embeddings.
+
+## Database setup (Neon)
+
+Open the Neon SQL Editor and paste `db/neon-setup.sql` (safe to re-run). It enables `vector` and `postgis` and creates every table.
+Regenerate it after adding a migration: `npm run db:bundle`.
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env.local   # fill DATABASE_URL etc.
+npm run db:migrate
+npm run db:seed              # ~400 fake listings
+npm run db:embed             # uses OPENAI_API_KEY, or a deterministic local fallback
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `RESEND_API_KEY`, emails are skipped and magic links are printed to the server log.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint && npm run typecheck && npm run build
+```
 
-## Learn More
+## Key routes
 
-To learn more about Next.js, take a look at the following resources:
+- `/` search · `/search` results · `/venues|vendors/[category]/[city]/[slug]` detail pages
+- `/dashboard` (Saved, Searches, Connections, My Wedding, Settings) · `/admin` (admins only)
+- Webhooks: `/api/stripe/webhook`, `/api/webhooks/resend`, `/api/webhooks/inbound`
+- Cron: `/api/cron/embed` every 15 min (embeds new or edited listings)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Runtime settings (field visibility tiers, filters, ranking weights, match labels, limits) live in `app_config` and are editable at `/admin`.
