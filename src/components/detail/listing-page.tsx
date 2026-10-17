@@ -9,6 +9,7 @@ import { getUserStates } from "@/lib/saves";
 import { APP_URL } from "@/lib/urls";
 import { ListingActions } from "@/components/listing-actions";
 import { LockedValue } from "@/components/locked";
+import { PhotoGallery } from "./photo-gallery";
 
 type Params = Promise<{ category: string; city: string; slug: string }>;
 
@@ -152,17 +153,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
         <ListingActions size="lg" viewer={actionViewer} listingType={type} listingId={listing.listingId} name={listing.name} saved={state?.saved ?? false} connectionStatus={state?.connection?.status ?? null} />
       </header>
 
-      <section aria-label="Photos" className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {listing.photos.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={src} src={src} alt={`${listing.name} photo ${i + 1}`} loading={i < 2 ? "eager" : "lazy"} className={`aspect-[4/3] w-full rounded-xl object-cover ${i === 0 ? "col-span-2 row-span-2 aspect-auto h-full" : ""}`} />
-        ))}
-        {listing.lockedPhotoCount > 0 ? (
-          <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-accent-soft p-3 text-center text-sm text-accent">
-            +{listing.lockedPhotoCount} more photos with Plus
-          </div>
-        ) : null}
-      </section>
+      <PhotoGallery name={listing.name} photos={listing.gallery} lockedCount={listing.lockedPhotoCount} />
 
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px]">
         <div className="space-y-8">

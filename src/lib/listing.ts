@@ -19,6 +19,25 @@ type Row = Record<string, unknown> & {
 
 const DETAIL_FIELDS = LISTING_FIELDS.filter((f) => !["latitude", "longitude"].includes(f));
 
+export type GalleryPhoto = { src: string; alt: string | null };
+
+const PHOTO_PARENT = {
+  vendor: { column: "vendor_id", cast: "uuid", table: "vendors" },
+  venue: { column: "venue_id", cast: "integer", table: "venues" },
+} as const;
+
+/** Active photos from listing_photos (n8n scrape / owner uploads): cover photo first, then sort_order. */
+export async function listingPhotos(type: "venue" | "vendor", id: string): Promise<GalleryPhoto[]> {
+  const { column, cast, table } = PHOTO_PARENT[type];
+  return query<GalleryPhoto>(
+    `SELECT p.blob_url AS src, p.alt FROM listing_photos p
+     WHERE p.${column} = $1::${cast} AND p.status = 'active'
+     ORDER BY COALESCE(p.id = (SELECT cover_photo_id FROM ${table} WHERE id = $1::${cast}), false) DESC,
+       p.sort_order, p.created_at`,
+    [id],
+  );
+}
+
 /** Resolves a slug (or an old slug from history) for a listing type. */
 export async function findListingBySlug(type: "venue" | "vendor", slug: string) {
   const row = await queryOne<Row>(
@@ -38,8 +57,10 @@ export async function findListingBySlug(type: "venue" | "vendor", slug: string) 
 export async function getListingDetail(type: "venue" | "vendor", slug: string, viewer: Viewer) {
   const { row, redirectTo } = await findListingBySlug(type, slug);
   if (!row) return { listing: null, redirectTo };
-  const config = await getConfig();
+  const [config, scraped] = await Promise.all([getConfig(), listingPhotos(type, row.listing_id)]);
   const gated = gateListing(row, viewer, config, DETAIL_FIELDS);
+  // listing_photos are shown to everyone; listings without them fall back to the gated legacy photos column.
+  const gallery: GalleryPhoto[] = scraped.length ? scraped : gated.photos.map((src) => ({ src, alt: null }));
   return {
     redirectTo: null,
     listing: Object.assign({} as Record<string, unknown>, gated, {
@@ -50,6 +71,9 @@ export async function getListingDetail(type: "venue" | "vendor", slug: string, v
       href: listingHref(row),
       categorySlug: categorySlug(row.category),
       citySlug: citySlug(row.city, row.state),
+      gallery,
+      photos: gallery.map((p) => p.src),
+      lockedPhotoCount: scraped.length ? 0 : gated.lockedPhotoCount,
       // City-level point for the free map; exact pin only when the address is visible.
       mapPoint:
         row.lat == null
