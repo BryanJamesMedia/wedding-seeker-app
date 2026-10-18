@@ -229,13 +229,27 @@ export async function searchListings(params: SearchParams, viewer: Viewer): Prom
 
   const sql = new SqlBuilder();
   sql.where.push("l.status = 'active'");
-  if (params.categories.length > 0) sql.where.push(`l.category = ANY(${sql.add(params.categories)})`);
+  if (params.categories.length > 0) {
+    sql.where.push(`lower(btrim(l.category)) = ANY(${sql.add(params.categories.map((c) => c.trim().toLowerCase()))})`);
+  }
 
   let distanceExpr = "NULL::float8";
   if (location) {
-    const point = `ST_SetSRID(ST_MakePoint(${sql.add(location.lng)}, ${sql.add(location.lat)}), 4326)::geography`;
-    sql.where.push(`ST_DWithin(l.geog, ${point}, ${sql.add(params.radius * METERS_PER_MILE)})`);
-    distanceExpr = `ST_Distance(l.geog, ${point})`;
+    const near: string[] = [];
+    if (location.lat != null && location.lng != null) {
+      const point = `ST_SetSRID(ST_MakePoint(${sql.add(location.lng)}, ${sql.add(location.lat)}), 4326)::geography`;
+      near.push(`ST_DWithin(l.geog, ${point}, ${sql.add(params.radius * METERS_PER_MILE)})`);
+      distanceExpr = `ST_Distance(l.geog, ${point})`;
+    }
+    // Address text matches too, so listings without a map point aren't dropped.
+    if (location.zips.length > 0) near.push(`left(btrim(l.zip), 5) = ANY(${sql.add(location.zips)}::text[])`);
+    if (location.cities.length > 0) {
+      const cities = sql.add(location.cities.map((c) => c.city.toLowerCase()));
+      const states = sql.add(location.cities.map((c) => c.state?.toLowerCase() ?? null));
+      near.push(`EXISTS (SELECT 1 FROM unnest(${cities}::text[], ${states}::text[]) AS m(city, state)
+        WHERE lower(btrim(l.city)) = m.city AND (m.state IS NULL OR lower(btrim(l.state)) = m.state))`);
+    }
+    sql.where.push(`(${near.join(" OR ")})`);
   }
   for (const def of filtersForCategories(config.filters, params.categories)) {
     applyFilter(sql, def, params.filters[def.key]);
