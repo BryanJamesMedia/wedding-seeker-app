@@ -4,6 +4,7 @@ import { getConfig } from "./config";
 import { LISTING_FIELDS } from "./config-defaults";
 import { gateListing, isLocked, type Viewer } from "./gating";
 import { citySlug, listingHref, categorySlug } from "./search";
+import { listingKey, mainPhotoOrder, mainPhotos, PHOTO_PARENT } from "./photos";
 
 type Row = Record<string, unknown> & {
   listing_type: "venue" | "vendor";
@@ -21,19 +22,13 @@ const DETAIL_FIELDS = LISTING_FIELDS.filter((f) => !["latitude", "longitude"].in
 
 export type GalleryPhoto = { src: string; alt: string | null };
 
-const PHOTO_PARENT = {
-  vendor: { column: "vendor_id", cast: "uuid", table: "vendors" },
-  venue: { column: "venue_id", cast: "integer", table: "venues" },
-} as const;
-
-/** Active photos from listing_photos (n8n scrape / owner uploads): cover photo first, then sort_order. */
+/** Active photos from listing_photos (n8n scrape / owner uploads): main photo first (see mainPhotoOrder), then sort_order. */
 export async function listingPhotos(type: "venue" | "vendor", id: string): Promise<GalleryPhoto[]> {
   const { column, cast, table } = PHOTO_PARENT[type];
   return query<GalleryPhoto>(
-    `SELECT p.blob_url AS src, p.alt FROM listing_photos p
-     WHERE p.${column} = $1::${cast} AND p.status = 'active'
-     ORDER BY COALESCE(p.id = (SELECT cover_photo_id FROM ${table} WHERE id = $1::${cast}), false) DESC,
-       p.sort_order, p.created_at`,
+    `SELECT p.blob_url AS src, p.alt FROM ${table} o JOIN listing_photos p ON p.${column} = o.id
+     WHERE o.id = $1::${cast} AND p.status = 'active'
+     ORDER BY ${mainPhotoOrder("o")}`,
     [id],
   );
 }
@@ -101,5 +96,6 @@ export async function similarListings(type: "venue" | "vendor", id: string) {
      LIMIT 6`,
     [type, id],
   );
-  return rows.map((r) => ({ ...r, href: listingHref(r) }));
+  const covers = await mainPhotos(rows.map((r) => ({ listingType: r.listing_type, listingId: r.listing_id })));
+  return rows.map((r) => ({ ...r, first_photo: covers.get(listingKey(r.listing_type, r.listing_id))?.src ?? r.first_photo, href: listingHref(r) }));
 }
