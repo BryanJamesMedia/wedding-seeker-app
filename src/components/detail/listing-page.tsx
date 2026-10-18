@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { categoryLabel } from "@/lib/categories";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Globe, MapPin, Phone, Star } from "lucide-react";
@@ -13,6 +14,11 @@ import { PhotoGallery } from "./photo-gallery";
 
 type Params = Promise<{ category: string; city: string; slug: string }>;
 
+function categoryOf(listing: Record<string, unknown>): string | null {
+  const category = str(listing.category);
+  return category ? categoryLabel(category) : null;
+}
+
 function str(value: unknown): string | null {
   if (value == null || isLocked(value)) return null;
   if (Array.isArray(value)) return value.length ? value.join(", ") : null;
@@ -25,7 +31,7 @@ export async function listingMetadata(type: "venue" | "vendor", params: Params):
   const { listing } = await getListingDetail(type, slug, { userId: null, paid: false });
   if (!listing) return { title: "Not found" };
   const place = [listing.city, listing.state].filter(Boolean).join(", ");
-  const title = `${listing.name} — ${str(listing.category) ?? "Wedding"} in ${place}`;
+  const title = `${listing.name} — ${categoryOf(listing) ?? "Wedding"} in ${place}`;
   const description = (str(listing.summary) ?? `${listing.name} is a wedding ${type} in ${place}.`).slice(0, 160);
   const image = listing.photos[0];
   return {
@@ -133,15 +139,15 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
         {back ? (
           <Link href={back} className="underline underline-offset-2">← Back to results</Link>
         ) : (
-          <Link href={`/search?category=${encodeURIComponent(str(listing.category) ?? "")}&location=${encodeURIComponent([listing.city, listing.state].filter(Boolean).join(", "))}`} className="underline underline-offset-2">
-            More {str(listing.category)?.toLowerCase() ?? "listings"} near {str(listing.city)}
+          <Link href={`/search?type=${type}&category=${encodeURIComponent(str(listing.category) ?? "")}&location=${encodeURIComponent([listing.city, listing.state].filter(Boolean).join(", "))}`} className="underline underline-offset-2">
+            More {categoryOf(listing)?.toLowerCase() ?? "listings"} near {str(listing.city)}
           </Link>
         )}
       </nav>
 
       <header className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted">{str(listing.category)}</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{categoryOf(listing)}</p>
           <h1 className="font-serif text-4xl font-semibold leading-tight sm:text-5xl">{listing.name}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-3 text-muted">
             <span className="inline-flex items-center gap-1"><MapPin className="size-4" aria-hidden />{[listing.city, listing.state].filter(Boolean).join(", ")}</span>

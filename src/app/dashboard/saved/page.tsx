@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryLabel } from "@/lib/categories";
 import { query } from "@/db";
 import { requireUser, isPaid } from "@/lib/session";
 import { listingHref } from "@/lib/search";
@@ -30,7 +31,7 @@ export default async function SavedPage() {
               ) : <div className="size-20 rounded-xl bg-accent-soft" />}
               <div className="min-w-0 flex-1">
                 <Link href={listingHref(r)} className="font-medium hover:text-accent">{r.name}</Link>
-                <p className="text-sm text-muted">{r.category} · {[r.city, r.state].filter(Boolean).join(", ")}</p>
+                <p className="text-sm text-muted">{r.category ? categoryLabel(r.category) : null} · {[r.city, r.state].filter(Boolean).join(", ")}</p>
                 {r.status ? <p className="text-xs text-sage">{STATUS_LABELS[r.status]}</p> : null}
                 <div className="mt-2"><ListingActions viewer={viewer} listingType={r.listing_type} listingId={r.listing_id} name={r.name} saved connectionStatus={r.status} /></div>
               </div>

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, X } from "lucide-react";
 import type { FilterDef } from "@/lib/config-defaults";
+import { categoryLabel, LISTING_TYPES, type ListingType } from "@/lib/categories";
 
 const PLACEHOLDERS = [
   "Relaxed boho beach ceremony for about 60 guests, sunset, nothing too formal",
@@ -12,6 +14,7 @@ const PLACEHOLDERS = [
 ];
 
 export type SearchPanelValues = {
+  listingType: ListingType | null;
   categories: string[];
   location: string;
   radius: number;
@@ -25,7 +28,7 @@ export function SearchPanel({
   initial,
   compact = false,
 }: {
-  categories: { category: string; listingType: "venue" | "vendor" }[];
+  categories: { category: string; listingType: ListingType }[];
   filters: FilterDef[];
   initial: SearchPanelValues;
   compact?: boolean;
@@ -74,10 +77,11 @@ export function SearchPanel({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (values.categories.length === 0) return setError("Choose what you're looking for.");
+    if (!values.listingType) return setError("Choose venues or vendors.");
     if (!values.location.trim()) return setError("Enter a city or ZIP code.");
     setError(null);
     const qs = new URLSearchParams();
+    qs.set("type", values.listingType);
     for (const c of values.categories) qs.append("category", c);
     qs.set("location", values.location.trim());
     qs.set("radius", String(values.radius));
@@ -106,35 +110,63 @@ export function SearchPanel({
 
   const field = "w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm";
   const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-muted";
-  const venues = categories.filter((c) => c.listingType === "venue");
-  const vendors = categories.filter((c) => c.listingType === "vendor");
+  const typeCategories = categories.filter((c) => c.listingType === values.listingType).map((c) => c.category);
+  const toggleCategory = (category: string) =>
+    setValues((v) => ({
+      ...v,
+      categories: v.categories.includes(category) ? v.categories.filter((x) => x !== category) : [...v.categories, category],
+    }));
 
   return (
     <form onSubmit={submit} className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${compact ? "" : "sm:p-6"}`} aria-label="Search">
       <fieldset>
-        <legend className={label}>What are you looking for</legend>
-        <div className="flex flex-wrap gap-2">
-          {[...venues, ...vendors].map((c) => {
-            const active = values.categories.includes(c.category);
+        <legend className={label}>Search for</legend>
+        <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-accent-soft p-1">
+          {LISTING_TYPES.map((t) => {
+            const on = values.listingType === t.value;
             return (
-              <button
-                key={c.category}
-                type="button"
-                aria-pressed={active}
-                onClick={() =>
-                  setValues((v) => ({
-                    ...v,
-                    categories: active ? v.categories.filter((x) => x !== c.category) : [...v.categories, c.category],
-                  }))
-                }
-                className={`rounded-full border px-3 py-1.5 text-sm ${active ? "border-accent bg-accent text-white" : "border-border bg-white hover:border-accent"}`}
+              <label
+                key={t.value}
+                className={`cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent ${on ? "bg-white text-accent shadow-sm ring-1 ring-accent" : "text-foreground hover:bg-white/60"}`}
               >
-                {c.category === "Venue" ? "Venues" : c.category}
-              </button>
+                <input
+                  type="radio"
+                  name={`${id}-type`}
+                  value={t.value}
+                  checked={on}
+                  onChange={() => setValues((v) => ({ ...v, listingType: t.value, categories: v.listingType === t.value ? v.categories : [] }))}
+                  className="sr-only"
+                />
+                {t.label}
+              </label>
             );
           })}
         </div>
       </fieldset>
+
+      {values.listingType && typeCategories.length > 1 ? (
+        <div className="mt-4">
+          <span id={`${id}-cat-label`} className={label}>Categories</span>
+          <CategoryPicker labelledBy={`${id}-cat-label`} options={typeCategories} selected={values.categories} onToggle={toggleCategory} />
+          {values.categories.length > 0 ? (
+            <ul aria-label="Selected categories" className="mt-2 flex flex-wrap gap-2">
+              {values.categories.map((c) => (
+                <li key={c}>
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(c)}
+                    aria-label={`Remove ${categoryLabel(c)}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-accent bg-accent py-1.5 pl-3 pr-2 text-sm text-white hover:bg-accent-strong"
+                  >
+                    {categoryLabel(c)}
+                    <X className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className={`mt-4 grid gap-3 ${compact ? "" : "sm:grid-cols-[1fr_140px]"}`}>
         <div className="relative">
@@ -207,6 +239,90 @@ export function SearchPanel({
         Search
       </button>
     </form>
+  );
+}
+
+function CategoryPicker({
+  labelledBy,
+  options,
+  selected,
+  onToggle,
+}: {
+  labelledBy: string;
+  options: string[];
+  selected: string[];
+  onToggle: (category: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        button.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const sorted = [...options].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b)));
+  const shown = sorted.filter((o) => categoryLabel(o).toLowerCase().includes(filter.trim().toLowerCase()));
+  const summary =
+    selected.length === 0 ? "All categories" : selected.length === 1 ? categoryLabel(selected[0]) : `${selected.length} categories selected`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        ref={button}
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-labelledby={labelledBy}
+        aria-describedby={`${labelledBy}-summary`}
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-left text-sm hover:border-accent"
+      >
+        <span id={`${labelledBy}-summary`} className={selected.length ? "text-foreground" : "text-muted"}>{summary}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      {open ? (
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-border bg-white shadow-lg">
+          {options.length > 8 ? (
+            <div className="border-b border-border p-2">
+              <input
+                autoFocus
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Type to filter…"
+                aria-label="Filter categories"
+                className="w-full rounded-lg border border-border px-2.5 py-1.5 text-sm"
+              />
+            </div>
+          ) : null}
+          <div role="group" aria-labelledby={labelledBy} className="max-h-64 overflow-y-auto py-1">
+            {shown.map((o) => (
+              <label key={o} className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm hover:bg-accent-soft">
+                <input type="checkbox" checked={selected.includes(o)} onChange={() => onToggle(o)} className="size-4 accent-[var(--accent)]" />
+                {categoryLabel(o)}
+              </label>
+            ))}
+            {shown.length === 0 ? <p className="px-3 py-2 text-sm text-muted">No matching categories</p> : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryLabel } from "@/lib/categories";
 import { query } from "@/db";
 import { requireUser } from "@/lib/session";
 import { listingHref } from "@/lib/search";
@@ -32,7 +33,7 @@ export default async function ConnectionsPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <Link href={listingHref(r)} className="font-medium hover:text-accent">{r.name}</Link>
-                  <p className="text-sm text-muted">{r.category} · {[r.city, r.state].filter(Boolean).join(", ")}</p>
+                  <p className="text-sm text-muted">{r.category ? categoryLabel(r.category) : null} · {[r.city, r.state].filter(Boolean).join(", ")}</p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${TONE[r.status] ?? "bg-accent-soft text-accent"}`}>{STATUS_LABELS[r.status]}</span>
               </div>

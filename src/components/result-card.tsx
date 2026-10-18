@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryLabel } from "@/lib/categories";
 import { MapPin, Star } from "lucide-react";
 import { isLocked } from "@/lib/gating";
 import type { SearchResult } from "@/lib/search";
@@ -31,7 +32,7 @@ export function ResultCard({
           {result.matchLabel ? (
             <span className="rounded-full bg-[#e7f3ee] px-2 py-0.5 text-xs font-medium text-sage">{result.matchLabel}</span>
           ) : null}
-          <span className="text-xs uppercase tracking-wide text-muted">{result.category}</span>
+          <span className="text-xs uppercase tracking-wide text-muted">{result.category ? categoryLabel(result.category) : null}</span>
         </div>
         <h3 className="mt-1 font-serif text-xl font-semibold leading-tight">
           <Link href={result.href} className="hover:text-accent">
