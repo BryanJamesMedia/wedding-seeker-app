@@ -77,3 +77,22 @@ body {
   filter: blur(4px);
   user-select: none;
 }
+
+@utility bg-dark-gradient {
+  background: linear-gradient(135deg, #233958 0%, #2d4760 50%, #233958 100%);
+}
+
+@keyframes ws-scroll-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.ws-marquee {
+  animation: ws-scroll-left 40s linear infinite;
+}
+.ws-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-marquee { animation: none; }
+}

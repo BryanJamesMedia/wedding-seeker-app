@@ -377,3 +377,11 @@ export async function countListings(): Promise<{ total: number; topState: string
   const total = rows.reduce((sum, r) => sum + Number(r.count), 0);
   return { total, topState: rows[0]?.state ?? null, topStateCount: rows[0] ? Number(rows[0].count) : 0 };
 }
+
+export async function countListingsByType(): Promise<{ venues: number; vendors: number }> {
+  const rows = await query<{ listing_type: string; count: string }>(
+    "SELECT listing_type, count(*) AS count FROM listings WHERE status = 'active' GROUP BY listing_type",
+  );
+  const get = (type: string) => Number(rows.find((r) => r.listing_type === type)?.count ?? 0);
+  return { venues: get("venue"), vendors: get("vendor") };
+}

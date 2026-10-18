@@ -2,16 +2,19 @@ import { query } from "@/db";
 import { APP_URL } from "@/lib/urls";
 import { listingHref } from "@/lib/search";
 import { escapeXml, stateSlug } from "@/lib/sitemap";
+import { listPosts } from "@/lib/blog";
 
 export const revalidate = 3600;
 
-const STATIC_PAGES = ["/", "/terms", "/privacy"];
+const STATIC_PAGES = ["/", "/blog", "/terms", "/privacy"];
 
 export async function GET(_request: Request, { params }: RouteContext<"/sitemaps/[state]">) {
   const { state } = await params;
   let urls: { loc: string; lastmod?: string }[];
   if (state === "pages") {
     urls = STATIC_PAGES.map((p) => ({ loc: `${APP_URL}${p}` }));
+    const posts = await listPosts({ limit: 5000 });
+    urls.push(...posts.map((p) => ({ loc: `${APP_URL}/blog/${p.slug}`, lastmod: p.updatedAt.toISOString() })));
   } else {
     const rows = await query<{ listing_type: string; slug: string; category: string | null; city: string | null; state: string | null; updated_at: Date }>(
       `SELECT listing_type, slug, category, city, state, updated_at FROM listings
