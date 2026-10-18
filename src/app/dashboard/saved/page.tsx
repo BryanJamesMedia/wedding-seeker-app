@@ -3,6 +3,7 @@ import { categoryLabel } from "@/lib/categories";
 import { query } from "@/db";
 import { requireUser, isPaid } from "@/lib/session";
 import { listingHref } from "@/lib/search";
+import { listingKey, mainPhotos } from "@/lib/photos";
 import { STATUS_LABELS } from "@/lib/connections";
 import { ListingActions } from "@/components/listing-actions";
 
@@ -15,6 +16,8 @@ export default async function SavedPage() {
      WHERE s.user_id = $1 ORDER BY s.created_at DESC`,
     [user.id],
   );
+  const covers = await mainPhotos(rows.map((r) => ({ listingType: r.listing_type, listingId: r.listing_id })));
+  for (const r of rows) r.first_photo = covers.get(listingKey(r.listing_type, r.listing_id))?.src ?? r.first_photo;
   const viewer = isPaid(user) ? "paid" : "unpaid";
   return (
     <div>

@@ -1,7 +1,8 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { del, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { query, queryOne } from "@/db";
+import { queryOne, withTransaction } from "@/db";
+import { claimCoverIfEmpty } from "@/lib/photos";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -85,7 +86,8 @@ export async function POST(request: Request) {
     });
 
     try {
-      const rows = await query<{ id: string }>(
+      const saved = await withTransaction(async (db) => {
+        const { rows } = await db.query<{ id: string }>(
         `INSERT INTO listing_photos
            (${column}, blob_url, blob_path, origin, status, sort_order,
             width, height, bytes, alt, source_url, found_on, content_hash)
@@ -107,12 +109,17 @@ export async function POST(request: Request) {
           text("found_on"),
           hash,
         ],
-      );
-      if (!rows.length) {
+        );
+        if (!rows.length) return null;
+        // First photo for a listing becomes its cover; an existing cover is never replaced.
+        const cover = await claimCoverIfEmpty(db, kind, listingId, rows[0].id);
+        return { photoId: rows[0].id, cover };
+      });
+      if (!saved) {
         await del(blob.url);
         return NextResponse.json({ result: "exists" });
       }
-      return NextResponse.json({ result: "created", photoId: rows[0].id, blobUrl: blob.url });
+      return NextResponse.json({ result: "created", photoId: saved.photoId, blobUrl: blob.url, cover: saved.cover });
     } catch (e) {
       await del(blob.url).catch(() => {});
       throw e;

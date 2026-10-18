@@ -6,6 +6,7 @@ import type { AppConfig, FilterDef, MatchLabelConfig } from "./config-defaults";
 import { EMBEDDING_MODEL, getQueryEmbedding } from "./embeddings";
 import { gateListing, type Viewer } from "./gating";
 import { resolveLocation, type ResolvedLocation } from "./location";
+import { listingKey, mainPhotos } from "./photos";
 
 export const RADIUS_OPTIONS = [10, 25, 50, 100] as const;
 export const SORT_OPTIONS = ["best", "distance", "rating"] as const;
@@ -318,7 +319,9 @@ export async function searchListings(params: SearchParams, viewer: Viewer): Prom
   }
 
   const total = rows[0] ? Number(rows[0].total) : 0;
-  const results = rows.map((r) => shapeResult(r, viewer, config));
+  const shaped = rows.map((r) => shapeResult(r, viewer, config));
+  const covers = await mainPhotos(shaped);
+  const results = shaped.map((r) => ({ ...r, thumbnail: covers.get(listingKey(r.listingType, r.listingId))?.src ?? r.thumbnail }));
   const zeroResultHint = total === 0 ? widenHint(params) : null;
   return {
     ...base,
