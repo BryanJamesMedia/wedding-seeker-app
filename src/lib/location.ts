@@ -37,9 +37,14 @@ export async function resolveLocation(input: string): Promise<ResolvedLocation |
   const zip = text.match(/^(\d{5})(?:-\d{4})?$/);
   if (zip) {
     const zip5 = zip[1];
+    // Census ZIP center first; listings' average point if the ZIP isn't in that list.
     const [center] = await query<PlaceRow>(
-      `SELECT $1::text AS label, avg(ST_Y(geog::geometry)) AS lat, avg(ST_X(geog::geometry)) AS lng
-       FROM listings WHERE ${ZIP5} = $1 HAVING count(*) > 0`,
+      `SELECT $1::text AS label,
+         coalesce(z.lat, avg(ST_Y(l.geog::geometry))) AS lat, coalesce(z.lng, avg(ST_X(l.geog::geometry))) AS lng
+       FROM (SELECT 1) one
+       LEFT JOIN zip_centroids z ON z.zip = $1
+       LEFT JOIN listings l ON left(btrim(l.zip), 5) = $1
+       GROUP BY z.lat, z.lng HAVING z.lat IS NOT NULL OR count(l.listing_id) > 0`,
       [zip5],
     );
     if (!center) return null;

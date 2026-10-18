@@ -1,3 +1,6 @@
 {
-  "crons": [{ "path": "/api/cron/embed", "schedule": "*/15 * * * *" }]
+  "crons": [
+    { "path": "/api/cron/embed", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/geocode", "schedule": "*/15 * * * *" }
+  ]
 }

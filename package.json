@@ -11,6 +11,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed-dev.ts",
     "db:embed": "tsx scripts/embed.ts",
+    "db:geocode": "tsx scripts/geocode.ts",
     "db:bundle": "tsx scripts/bundle-sql.ts"
   },
   "dependencies": {

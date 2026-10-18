@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     ],
   },
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    "/api/cron/geocode": ["./data/zip-centroids.csv"],
+  },
 };
 
 export default nextConfig;
