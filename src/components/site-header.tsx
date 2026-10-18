@@ -20,6 +20,9 @@ export async function SiteHeader() {
             <Link href="/search" className="hidden rounded-full px-3 py-2 font-medium text-foreground hover:text-accent sm:inline">
               Search
             </Link>
+            <Link href="/blog" className="hidden rounded-full px-3 py-2 font-medium text-foreground hover:text-accent sm:inline">
+              Blog
+            </Link>
             {viewer.user ? (
               <Link href="/dashboard" className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent">
                 Dashboard

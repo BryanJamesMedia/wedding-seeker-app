@@ -12,6 +12,7 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-5">
           <Link href="/search" className="hover:text-white">Search</Link>
+          <Link href="/blog" className="hover:text-white">Blog</Link>
           <Link href="/terms" className="hover:text-white">Terms</Link>
           <Link href="/privacy" className="hover:text-white">Privacy</Link>
         </nav>
