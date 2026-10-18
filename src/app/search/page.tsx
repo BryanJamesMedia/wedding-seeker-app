@@ -9,6 +9,7 @@ import { getConfig } from "@/lib/config";
 import { getViewer } from "@/lib/session";
 import { getUserStates } from "@/lib/saves";
 import { listCategories, parseSearchParams, SORT_OPTIONS, toQueryString } from "@/lib/search";
+import { categoryLabel } from "@/lib/categories";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
 
@@ -18,7 +19,11 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const raw = await searchParams;
   const params = parseSearchParams(raw);
   const [viewer, config, categories] = await Promise.all([getViewer(), getConfig(), listCategories()]);
-  const ready = params.categories.length > 0 && params.location;
+  if (!params.listingType && params.categories.length > 0) {
+    const wanted = params.categories.map((c) => c.toLowerCase());
+    params.listingType = categories.find((c) => wanted.includes(c.category.toLowerCase()))?.listingType ?? null;
+  }
+  const ready = params.listingType && params.location;
   const timed = ready ? await timedSearch(params, viewer) : null;
   const response = timed?.response ?? null;
   if (timed) after(() => logSearch(params, timed.response, viewer.userId, timed.durationMs));
@@ -36,6 +41,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           categories={categories}
           filters={config.filters}
           initial={{
+            listingType: params.listingType,
             categories: params.categories,
             location: params.location,
             radius: params.radius,
@@ -71,7 +77,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                 <SaveSearchButton
                   viewer={actionViewer}
                   query={toQueryString({ ...params, page: undefined })}
-                  defaultName={[params.categories.join(", ") || "All", response.location?.label].filter(Boolean).join(" near ")}
+                  defaultName={[params.categories.map(categoryLabel).join(", ") || (params.listingType === "venue" ? "Venues" : "Vendors"), response.location?.label].filter(Boolean).join(" near ")}
                 />
               <nav aria-label="Sort results" className="flex gap-1 text-sm">
                 {SORT_OPTIONS.filter((s) => s !== "best" || response.usedDescription).map((s) => (

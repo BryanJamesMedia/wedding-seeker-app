@@ -1,4 +1,5 @@
 import "server-only";
+import type { ListingType } from "@/lib/categories";
 import { query } from "@/db";
 import { getConfig } from "./config";
 import type { AppConfig, FilterDef, MatchLabelConfig } from "./config-defaults";
@@ -12,6 +13,7 @@ export type SortOption = (typeof SORT_OPTIONS)[number];
 const METERS_PER_MILE = 1609.344;
 
 export type SearchParams = {
+  listingType: ListingType | null;
   categories: string[];
   location: string;
   radius: number;
@@ -32,6 +34,7 @@ export function parseSearchParams(raw: Record<string, string | string[] | undefi
     const list = Array.isArray(value) ? value : value ? [value] : [];
     return list.flatMap((v) => v.split(",")).map((v) => v.trim()).filter(Boolean);
   };
+  const type = one("type");
   const radius = Number(one("radius"));
   const sort = one("sort") as SortOption;
   const filters: Record<string, string | string[]> = {};
@@ -40,6 +43,7 @@ export function parseSearchParams(raw: Record<string, string | string[] | undefi
     filters[key.slice(2)] = Array.isArray(value) ? value : value.includes(",") ? value.split(",") : value;
   }
   return {
+    listingType: type === "venue" || type === "vendor" ? type : null,
     categories: many("category"),
     location: one("location").slice(0, 120),
     radius: (RADIUS_OPTIONS as readonly number[]).includes(radius) ? radius : 25,
@@ -229,6 +233,7 @@ export async function searchListings(params: SearchParams, viewer: Viewer): Prom
 
   const sql = new SqlBuilder();
   sql.where.push("l.status = 'active'");
+  if (params.listingType) sql.where.push(`l.listing_type = ${sql.add(params.listingType)}`);
   if (params.categories.length > 0) {
     sql.where.push(`lower(btrim(l.category)) = ANY(${sql.add(params.categories.map((c) => c.trim().toLowerCase()))})`);
   }
@@ -350,6 +355,7 @@ function widenHint(params: SearchParams): { label: string; href: string } | null
 
 export function toQueryString(params: Partial<SearchParams>): string {
   const qs = new URLSearchParams();
+  if (params.listingType) qs.set("type", params.listingType);
   for (const c of params.categories ?? []) qs.append("category", c);
   if (params.location) qs.set("location", params.location);
   if (params.radius) qs.set("radius", String(params.radius));
@@ -363,9 +369,9 @@ export function toQueryString(params: Partial<SearchParams>): string {
 
 export async function listCategories(): Promise<{ category: string; listingType: "venue" | "vendor"; count: number }[]> {
   const rows = await query<{ category: string; listing_type: "venue" | "vendor"; count: string }>(
-    `SELECT category, min(listing_type) AS listing_type, count(*) AS count FROM listings
-     WHERE status = 'active' AND category IS NOT NULL GROUP BY category
-     ORDER BY min(listing_type) DESC, count(*) DESC`,
+    `SELECT min(btrim(category)) AS category, listing_type, count(*) AS count FROM listings
+     WHERE status = 'active' AND nullif(btrim(category), '') IS NOT NULL GROUP BY listing_type, lower(btrim(category))
+     ORDER BY listing_type DESC, count(*) DESC`,
   );
   return rows.map((r) => ({ category: r.category, listingType: r.listing_type, count: Number(r.count) }));
 }
