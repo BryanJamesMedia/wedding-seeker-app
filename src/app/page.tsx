@@ -51,7 +51,7 @@ const FEATURES = [
 ];
 
 const FAQS = [
-  ["Is it free to search?", "Yes. Anyone can search every venue and vendor without signing up. Create a free account to save favorites and searches, and upgrade to Wedding Seeker Plus to see full contact details and connect with vendors in one click."],
+  ["Is it free to search?", "Yes. Anyone can search every venue and vendor without signing up. Create a free account for full access — contact details, every result, saved favorites and searches. Fill out your wedding details once to start connecting with vendors."],
   ["How does the search know what I want?", "Pick a category and a location, then describe your wedding in your own words. We combine your filters, distance and description to rank every listing by how well it fits — so “rustic barn, 150 guests” and “intimate beach elopement” get very different results."],
   ["Do I have to book through Wedding Seeker?", "No. When you connect with a vendor, they reply to you directly. You talk, negotiate and book with them yourself — we just make finding and reaching the right ones fast."],
   ["What areas do you cover?", "Thousands of venues and vendors, with the deepest coverage in Florida. Search by city or ZIP code and pick a radius to see everything nearby."],
@@ -60,6 +60,7 @@ const FAQS = [
   ["What types of weddings can I search for?", "All of them — elopements for two, micro weddings, backyard ceremonies, destination weekends and grand celebrations with 300+ guests. Just describe what you're planning."],
   ["What if I don't have all my details figured out yet?", "That's completely normal. Start with a location and the type of vendor you need. You can always refine your description and filters as your plans come together."],
   ["Can I save my searches?", "Yes. With a free account you can save searches and favorite listings, then come back to them anytime from your dashboard."],
+  ["Is there a limit on Connect requests?", "To keep requests meaningful for vendors, you can send up to 5 Connect requests per category every 72 hours — for example 5 photographers and 5 venues."],
   ["Do you work with LGBTQ+ couples?", "Absolutely. Love is love, and every couple deserves vendors who celebrate them."],
 ];
 

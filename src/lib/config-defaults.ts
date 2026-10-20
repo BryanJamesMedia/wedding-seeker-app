@@ -212,6 +212,9 @@ export type LimitsConfig = {
   freeImageCount: number;
   pageSize: number;
   connectsPerDay: number;
+  /** Max Connect requests per category (all venues count as one category) in a rolling window. */
+  connectsPerCategory: number;
+  connectWindowHours: number;
   showRatingToFree: boolean;
   /** Days before a couple may resend an unanswered Connect request. */
   resendAfterDays: number;
@@ -224,6 +227,8 @@ export const DEFAULT_LIMITS: LimitsConfig = {
   freeImageCount: 3,
   pageSize: 20,
   connectsPerDay: 25,
+  connectsPerCategory: 5,
+  connectWindowHours: 72,
   showRatingToFree: true,
   resendAfterDays: 7,
   shareContactInFirstEmail: false,

@@ -35,9 +35,12 @@ export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
   );
 });
 
+/**
+ * No paywall: every signed-in account has full access. plan_status / paid_until and the
+ * Stripe code are kept so paid plans could return later.
+ */
 export function isPaid(user: AppUser | null): boolean {
-  if (!user || user.plan_status !== "paid") return false;
-  return !user.paid_until || new Date(user.paid_until).getTime() > Date.now();
+  return user != null;
 }
 
 export async function getViewer(): Promise<Viewer & { user: AppUser | null }> {

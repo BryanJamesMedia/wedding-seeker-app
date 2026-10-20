@@ -10,6 +10,7 @@ export type PendingAction =
 type ModalState =
   | { mode: "auth"; reason: "signup" | "save" | "connect"; action?: PendingAction }
   | { mode: "upgrade"; action?: PendingAction }
+  | { mode: "welcome" }
   | null;
 
 let state: ModalState = null;
@@ -21,6 +22,11 @@ function setState(next: ModalState) {
 
 export function openAuthModal(args: { reason: "signup" | "save" | "connect"; action?: PendingAction }) {
   setState({ mode: "auth", ...args });
+}
+
+/** Shown after sign-in until My Wedding is complete. */
+export function openWelcomeModal() {
+  setState({ mode: "welcome" });
 }
 
 export function openUpgradeModal(action?: PendingAction) {
@@ -76,8 +82,29 @@ export function GateModal({ googleEnabled }: { googleEnabled: boolean }) {
         <AuthStep reason={current.reason} action={current.action} googleEnabled={googleEnabled} />
       ) : current?.mode === "upgrade" ? (
         <UpgradeStep action={current.action} />
+      ) : current?.mode === "welcome" ? (
+        <WelcomeStep />
       ) : null}
     </dialog>
+  );
+}
+
+function WelcomeStep() {
+  return (
+    <div className="relative p-6 sm:p-8">
+      <CloseButton />
+      <p className="text-sm font-semibold uppercase tracking-widest text-coral">Welcome to Wedding Seeker</p>
+      <h2 id="gate-title" className="mt-2 font-serif text-2xl font-semibold">You have full access</h2>
+      <p className="mt-3 text-muted">
+        Search every venue and vendor, see their contact details, and save your favorites and searches.
+      </p>
+      <div className="mt-4 rounded-xl bg-accent-soft p-4 text-sm">
+        <p className="font-semibold">To connect with vendors, fill out your wedding details first.</p>
+        <p className="mt-1 text-muted">Vendors use your date, location, guest count and budget to tell you if they&apos;re available and a good fit.</p>
+      </div>
+      <a href="/dashboard/wedding" className="btn-coral mt-6 block rounded-lg px-6 py-3 text-center">Fill out my wedding details</a>
+      <button type="button" onClick={() => setState(null)} className="mt-3 w-full text-sm text-muted hover:text-foreground">Maybe later</button>
+    </div>
   );
 }
 
