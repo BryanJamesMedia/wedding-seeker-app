@@ -1,4 +1,5 @@
 import "server-only";
+import { categoryLabel } from "./categories";
 import { query, queryOne } from "@/db";
 import { getConfig } from "./config";
 import { APP_URL, CONNECT_FROM, button, escapeHtml, isProductionEmail, layout, sendAdminNotice, sendEmail, vendorRecipient } from "./email";
@@ -103,6 +104,22 @@ export async function createConnection(user: AppUser, ref: ListingRef, input: { 
   );
   if (Number(count) >= config.limits.connectsPerDay) {
     throw new ConnectError(`You've reached today's limit of ${config.limits.connectsPerDay} Connect requests. Try again tomorrow.`, 429);
+  }
+
+  // Rolling window per category; every request sent counts. All venues share one category.
+  const { connectsPerCategory: perCategory, connectWindowHours: hours } = config.limits;
+  const [used] = await query<{ count: string; oldest: Date | null }>(
+    `SELECT count(*) AS count, min(c.created_at) AS oldest FROM connection_requests c
+     JOIN listings l ON l.listing_type = c.listing_type AND l.listing_id = c.listing_id
+     WHERE c.user_id = $1 AND c.created_at > now() - make_interval(hours => $2::int) AND c.listing_type = $3
+       AND ($3 = 'venue' OR lower(btrim(l.category)) IS NOT DISTINCT FROM lower(btrim($4::text)))`,
+    [user.id, hours, listing.listing_type, listing.category],
+  );
+  if (Number(used.count) >= perCategory && used.oldest) {
+    const reopens = new Date(new Date(used.oldest).getTime() + hours * 3_600_000);
+    const what = listing.listing_type === "venue" ? "venue" : listing.category ? categoryLabel(listing.category) : "vendor";
+    const when = reopens.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    throw new ConnectError(`You've reached the limit of ${perCategory} ${what} requests in ${hours} hours. You can send more after ${when} ET.`, 429);
   }
 
   const optedOut =

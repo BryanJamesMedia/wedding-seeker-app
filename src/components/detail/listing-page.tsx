@@ -167,7 +167,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
           {listing.description != null ? (
             <section>
               <h2 className="font-serif text-2xl font-semibold">About</h2>
-              {isLocked(listing.description) ? <LockedValue label="Full description available with Plus" /> : <p className="mt-2 whitespace-pre-line">{str(listing.description)}</p>}
+              {isLocked(listing.description) ? <LockedValue label="Sign up free to read the full description" /> : <p className="mt-2 whitespace-pre-line">{str(listing.description)}</p>}
             </section>
           ) : null}
           {(capacity || price) && (
@@ -207,7 +207,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
                   <li key={label} className="flex items-start gap-2">
                     <Icon className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
                     {isLocked(value) ? (
-                      <LockedValue label={`${label} available with Plus`} />
+                      <LockedValue label={`Sign up free to see the ${label.toLowerCase()}`} />
                     ) : href ? (
                       <a href={href(String(value))} className="break-all text-accent underline underline-offset-2" target={label === "Website" ? "_blank" : undefined} rel="noopener nofollow">
                         {String(value)}
@@ -233,7 +233,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
                 className="h-56 w-full"
                 src={`https://www.openstreetmap.org/export/embed.html?bbox=${listing.mapPoint.lng - (listing.mapPoint.exact ? 0.01 : 0.08)}%2C${listing.mapPoint.lat - (listing.mapPoint.exact ? 0.01 : 0.06)}%2C${listing.mapPoint.lng + (listing.mapPoint.exact ? 0.01 : 0.08)}%2C${listing.mapPoint.lat + (listing.mapPoint.exact ? 0.01 : 0.06)}${listing.mapPoint.exact ? `&marker=${listing.mapPoint.lat}%2C${listing.mapPoint.lng}` : ""}`}
               />
-              {!listing.mapPoint.exact ? <p className="bg-card px-3 py-2 text-xs text-muted">Approximate area. Exact location with Plus.</p> : null}
+              {!listing.mapPoint.exact ? <p className="bg-card px-3 py-2 text-xs text-muted">Approximate area. Sign up free for the exact location.</p> : null}
             </div>
           ) : null}
         </aside>

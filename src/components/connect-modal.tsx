@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { missingWeddingFields } from "@/lib/wedding-requirements";
 
 type Profile = {
   partner1_name?: string | null;
@@ -37,7 +38,8 @@ function ConnectModal({ listingType, listingId }: { listingType: "venue" | "vend
   const params = useSearchParams();
   const [profile, setProfile] = useState<Profile>({});
   const [message, setMessage] = useState("");
-  const [state, setState] = useState<"loading" | "form" | "sending" | "done">("loading");
+  const [state, setState] = useState<"loading" | "form" | "sending" | "done" | "incomplete">("loading");
+  const [missing, setMissing] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +49,9 @@ function ConnectModal({ listingType, listingId }: { listingType: "venue" | "vend
       .then((r) => r.json())
       .then((d: { profile: Profile | null; email: string }) => {
         setProfile({ contact_email: d.email, ...(d.profile ?? {}) });
-        setState("form");
+        const gaps = missingWeddingFields(d.profile);
+        setMissing(gaps);
+        setState(gaps.length > 0 ? "incomplete" : "form");
       })
       .catch(() => setState("form"));
   }, []);
@@ -69,7 +73,11 @@ function ConnectModal({ listingType, listingId }: { listingType: "venue" | "vend
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ listingType, listingId, message, profile }),
     }).catch(() => null);
-    const data = (await res?.json().catch(() => null)) as { status?: string; error?: string } | null;
+    const data = (await res?.json().catch(() => null)) as { status?: string; error?: string; code?: string; missing?: string[] } | null;
+    if (data?.code === "wedding_incomplete") {
+      setMissing(data.missing ?? []);
+      return setState("incomplete");
+    }
     if (!res?.ok) {
       setError(data?.error ?? "Something went wrong. Please try again.");
       return setState("form");
@@ -93,6 +101,17 @@ function ConnectModal({ listingType, listingId }: { listingType: "venue" | "vend
         </div>
         {state === "loading" ? (
           <p className="py-10 text-center text-muted">Loading…</p>
+        ) : state === "incomplete" ? (
+          <div className="py-6">
+            <p className="text-lg">To connect with vendors, first fill out your wedding details in My Wedding.</p>
+            {missing.length > 0 ? (
+              <>
+                <p className="mt-4 text-sm font-medium">Still needed:</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">{missing.map((m) => <li key={m}>{m}</li>)}</ul>
+              </>
+            ) : null}
+            <a href="/dashboard/wedding" className="btn-coral mt-6 inline-block rounded-lg px-6 py-3">Fill out my wedding details</a>
+          </div>
         ) : state === "done" ? (
           <div className="py-8 text-center">
             <p className="text-lg">{result}</p>

@@ -55,7 +55,7 @@ export function ResultCard({
         </p>
         {result.summary ? <p className="mt-1.5 line-clamp-2 text-sm">{result.summary}</p> : null}
         <p className="mt-1.5 text-sm">
-          {isLocked(result.phone) ? <LockedValue label="Phone available with Plus" /> : result.phone}
+          {isLocked(result.phone) ? <LockedValue label="Sign up free to see the phone number" /> : result.phone}
         </p>
         <div className="mt-3">
           <ListingActions

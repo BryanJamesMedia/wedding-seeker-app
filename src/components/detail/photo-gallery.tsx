@@ -57,7 +57,7 @@ export function PhotoGallery({ name, photos, lockedCount }: { name: string; phot
         })}
         {lockedCount > 0 ? (
           <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-accent-soft p-3 text-center text-sm text-accent">
-            +{lockedCount} more photos with Plus
+            +{lockedCount} more photos with a free account
           </div>
         ) : null}
       </section>

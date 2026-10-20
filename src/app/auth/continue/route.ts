@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { query } from "@/db";
 import { getCurrentUser, isPaid } from "@/lib/session";
+import { getWeddingProfile } from "@/lib/connections";
+import { missingWeddingFields } from "@/lib/wedding-requirements";
 import { isListingType, listingExists, saveListing } from "@/lib/saves";
 import { APP_URL } from "@/lib/urls";
 import { safeReturnPath } from "@/lib/utils";
@@ -64,6 +66,11 @@ export async function GET(request: Request) {
     }
   } else if (checkout === "success") {
     target.searchParams.set("toast", "paid");
+  }
+  // Every sign-in until My Wedding is complete: explain full access + the Connect requirement.
+  // A pending Connect opens its own modal, which shows the same requirement.
+  if (!target.searchParams.has("connect") && missingWeddingFields(await getWeddingProfile(user.id)).length > 0) {
+    target.searchParams.set("welcome", "1");
   }
   return NextResponse.redirect(target);
 }
