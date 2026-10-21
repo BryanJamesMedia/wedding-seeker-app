@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/session";
 import { DashboardNav } from "./nav";
 
@@ -6,6 +7,7 @@ export const metadata = { title: "Dashboard", robots: { index: false } };
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   const user = await requireUser("/dashboard");
+  if (user.account_type === "vendor") redirect("/vendor");
   return (
     <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[200px_1fr]">
       <aside>

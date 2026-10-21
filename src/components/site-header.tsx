@@ -24,7 +24,7 @@ export async function SiteHeader() {
               Blog
             </Link>
             {viewer.user ? (
-              <Link href="/dashboard" className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent">
+              <Link href={viewer.user.account_type === "vendor" ? "/vendor" : "/dashboard"} className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent">
                 Dashboard
               </Link>
             ) : null}

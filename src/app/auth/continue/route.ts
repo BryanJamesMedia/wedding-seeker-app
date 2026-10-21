@@ -26,6 +26,24 @@ export async function GET(request: Request) {
     );
   }
 
+  // Vendor sign-up: only a brand-new account can become a vendor account (one email, one account type).
+  if (url.searchParams.get("vendor") === "1" && user.account_type !== "vendor") {
+    const [row] = await query<{ used: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM wedding_profiles WHERE user_id = $1)
+           OR EXISTS (SELECT 1 FROM saved_listings WHERE user_id = $1)
+           OR EXISTS (SELECT 1 FROM saved_searches WHERE user_id = $1)
+           OR EXISTS (SELECT 1 FROM connection_requests WHERE user_id = $1) AS used`,
+      [user.id],
+    );
+    if (row?.used) return NextResponse.redirect(`${APP_URL}/vendor/sign-in?error=couple_account`);
+    await query("UPDATE users SET account_type = 'vendor' WHERE id = $1", [user.id]);
+    user.account_type = "vendor";
+  }
+  if (user.account_type === "vendor") {
+    const vendorPath = safeReturnPath(url.searchParams.get("return"), "/vendor");
+    return NextResponse.redirect(`${APP_URL}${vendorPath.startsWith("/vendor") ? vendorPath : "/vendor"}`);
+  }
+
   const kind = url.searchParams.get("action");
   const type = url.searchParams.get("type");
   const id = url.searchParams.get("id");

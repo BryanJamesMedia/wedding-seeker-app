@@ -19,6 +19,7 @@ export type AppUser = {
   email_connect_confirmations: boolean;
   email_saved_search_alerts: boolean;
   is_admin: boolean;
+  account_type: "couple" | "vendor";
 };
 
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
@@ -29,7 +30,7 @@ export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
   if (!session?.user) return null;
   return queryOne<AppUser>(
     `SELECT id, email, name, plan_status, paid_until, stripe_customer_id, stripe_subscription_id,
-            marketing_opt_in, terms_accepted_at, email_connect_confirmations, email_saved_search_alerts, is_admin
+            marketing_opt_in, terms_accepted_at, email_connect_confirmations, email_saved_search_alerts, is_admin, account_type
      FROM users WHERE id = $1 AND deleted_at IS NULL`,
     [session.user.id],
   );
