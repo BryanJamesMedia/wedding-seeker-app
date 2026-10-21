@@ -23,3 +23,7 @@ export function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "";
   return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+
+export function formatMoney(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+}

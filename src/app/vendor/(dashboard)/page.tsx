@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { categoryLabel } from "@/lib/categories";
+import { countLeads, getBalance } from "@/lib/leads";
+import { formatMoney } from "@/lib/utils";
 import { listClaims } from "@/lib/vendor";
 import { requireVendor } from "@/lib/vendor-auth";
 
@@ -7,10 +9,29 @@ const STATUS: Record<string, string> = { pending: "Awaiting approval", approved:
 
 export default async function VendorOverview() {
   const user = await requireVendor("/vendor");
-  const claims = await listClaims(user.id);
+  const [claims, counts, balance] = await Promise.all([listClaims(user.id), countLeads(user.id), getBalance(user.id)]);
   return (
     <div className="space-y-6">
       <h1 className="font-serif text-3xl font-semibold">Welcome{user.name ? `, ${user.name}` : ""}</h1>
+      <section aria-label="Summary" className="grid gap-3 sm:grid-cols-3">
+        {([
+          ["/vendor/requests", String(counts.open), "New connection requests"],
+          ["/vendor/leads", String(counts.purchased), "Your leads"],
+          [null, formatMoney(balance), "Wallet balance"],
+        ] as const).map(([href, value, label]) => {
+          const body = (
+            <>
+              <p className="text-2xl font-semibold">{value}</p>
+              <p className="text-sm text-muted">{label}</p>
+            </>
+          );
+          return href ? (
+            <Link key={label} href={href} className="rounded-2xl border border-border bg-card p-4 hover:border-accent">{body}</Link>
+          ) : (
+            <div key={label} className="rounded-2xl border border-border bg-card p-4">{body}</div>
+          );
+        })}
+      </section>
       <section className="rounded-3xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">Your listings</h2>
         {claims.length === 0 ? (

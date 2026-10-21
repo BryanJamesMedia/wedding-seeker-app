@@ -218,8 +218,6 @@ export type LimitsConfig = {
   showRatingToFree: boolean;
   /** Days before a couple may resend an unanswered Connect request. */
   resendAfterDays: number;
-  /** Share the couple's email/phone in the first vendor email (open decision). */
-  shareContactInFirstEmail: boolean;
 };
 
 export const DEFAULT_LIMITS: LimitsConfig = {
@@ -231,7 +229,6 @@ export const DEFAULT_LIMITS: LimitsConfig = {
   connectWindowHours: 72,
   showRatingToFree: true,
   resendAfterDays: 7,
-  shareContactInFirstEmail: false,
 };
 
 export type AppConfig = {
