@@ -11,6 +11,7 @@ import { APP_URL } from "@/lib/urls";
 import { ListingActions } from "@/components/listing-actions";
 import { LockedValue } from "@/components/locked";
 import { PhotoGallery } from "./photo-gallery";
+import { ClaimBanner } from "./claim-banner";
 
 type Params = Promise<{ category: string; city: string; slug: string }>;
 
@@ -160,6 +161,7 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
       </header>
 
       <PhotoGallery name={listing.name} photos={listing.gallery} lockedCount={listing.lockedPhotoCount} />
+      <ClaimBanner listingType={type} listingId={listing.listingId} />
 
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px]">
         <div className="space-y-8">

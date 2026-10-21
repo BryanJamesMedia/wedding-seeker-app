@@ -127,8 +127,11 @@ export function AuthStep({
   googleEnabled,
   returnTo,
   inline = false,
+  vendor = false,
 }: {
   reason: "signup" | "save" | "connect";
+  /** Vendor sign-up: /auth/continue marks a new account as a vendor account. */
+  vendor?: boolean;
   action?: PendingAction;
   googleEnabled: boolean;
   returnTo?: string;
@@ -144,6 +147,7 @@ export function AuthStep({
     const url = new URL(continueUrl(action, returnTo), window.location.origin);
     url.searchParams.set("terms", "1");
     if (marketing) url.searchParams.set("marketing", "1");
+    if (vendor) url.searchParams.set("vendor", "1");
     return url.pathname + url.search;
   };
 

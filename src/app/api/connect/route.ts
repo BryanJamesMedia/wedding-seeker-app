@@ -21,6 +21,9 @@ export async function POST(request: Request) {
   if (limited) return limited;
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
+  if (user.account_type === "vendor") {
+    return NextResponse.json({ error: "Vendor accounts can't send connection requests." }, { status: 403 });
+  }
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !isListingType(parsed.data.listingType)) {
     return NextResponse.json({ error: "Please check the form and try again." }, { status: 400 });
