@@ -5,6 +5,8 @@ import { getConfig } from "./config";
 import { APP_URL, CONNECT_FROM, button, escapeHtml, isProductionEmail, layout, sendAdminNotice, sendEmail, vendorRecipient } from "./email";
 import { listingHref } from "./search";
 import { signToken } from "./signing";
+import { getBalance, leadPrice } from "./leads";
+import { formatMoney } from "./utils";
 import type { AppUser } from "./session";
 import type { ListingRef } from "./saves";
 
@@ -18,6 +20,7 @@ export const STATUS_LABELS: Record<string, string> = {
   bounced: "Couldn't deliver",
   created: "Request created",
   replied: "Replied by email",
+  purchased: "Vendor is interested",
 };
 
 export type WeddingProfile = {
@@ -61,7 +64,7 @@ export async function upsertWeddingProfile(userId: string, p: Partial<WeddingPro
   );
 }
 
-function weddingWhen(p: Partial<WeddingProfile>): string | null {
+export function weddingWhen(p: Partial<WeddingProfile>): string | null {
   if (p.wedding_date) return new Date(`${p.wedding_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   if (p.target_month && p.target_year) return new Date(p.target_year, p.target_month - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   return p.target_year ? String(p.target_year) : null;
@@ -152,51 +155,72 @@ export async function createConnection(user: AppUser, ref: ListingRef, input: { 
     return { id, status: "pending_outreach" as const };
   }
 
-  const emailId = await sendVendorEmail(id, listing, user, snapshot, input.message, config.limits.shareContactInFirstEmail);
+  const emailId = await sendVendorEmail(id, listing, snapshot, input.message);
   if (emailId) await query("UPDATE connection_requests SET resend_email_id = $2 WHERE id = $1", [id, emailId]);
   return { id, status: "sent" as const };
 }
 
+/**
+ * Emails the listing about a new request. Never includes the couple's email or phone:
+ * the listing's owner gets those by purchasing the lead; unclaimed listings get a sign-up invite.
+ */
 async function sendVendorEmail(
   requestId: string,
   listing: ConnectListing,
-  user: AppUser,
   snapshot: Partial<WeddingProfile> & { when: string | null },
   message: string,
-  shareContact: boolean,
 ) {
   const couple = [snapshot.partner1_name, snapshot.partner2_name].filter(Boolean).join(" & ") || "A couple";
-  const respond = (answer: "interested" | "unavailable") => `${APP_URL}/r/${signToken({ r: requestId, a: answer })}`;
   const unsubscribe = `${APP_URL}/r/unsubscribe/${signToken({ e: listing.connect_to, l: `${listing.listing_type}:${listing.listing_id}` }, 3650)}`;
   const rows: [string, string | null | undefined][] = [
+    ["Couple", couple],
     ["Date", snapshot.when],
     ["Location", snapshot.location_text],
     ["Guests", snapshot.guest_count ? String(snapshot.guest_count) : null],
     ["Budget", snapshot.budget_range],
     ["Setting", snapshot.settings?.join(", ")],
     ["Vibe", snapshot.vibe],
+    ["Also looking for", snapshot.vendors_needed?.map(categoryLabel).join(", ")],
   ];
-  if (shareContact) rows.push(["Email", snapshot.contact_email ?? user.email], ["Phone", snapshot.contact_phone]);
   const table = rows
     .filter(([, v]) => v)
     .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#6f655e">${k}</td><td style="padding:4px 0">${escapeHtml(v)}</td></tr>`)
     .join("");
-  const html = layout(
-    `<h1 style="font-family:Georgia,serif;font-weight:600">${escapeHtml(couple)} would like to hear from ${escapeHtml(listing.name)}</h1>
-     <p>They found you on Wedding Seeker and sent their wedding details:</p>
-     <table style="border-collapse:collapse;margin:12px 0">${table}</table>
-     ${message ? `<p style="white-space:pre-line;border-left:3px solid #e8e0d8;padding-left:12px">${escapeHtml(message)}</p>` : ""}
-     <p>Are you available?</p>
-     <p>${button(respond("interested"), "Yes, I'm interested")} &nbsp; ${button(respond("unavailable"), "Not available", "#6f655e")}</p>
-     <p style="color:#6f655e;font-size:13px">Clicking “interested” shares the couple's contact details with you. You can also reply to this email.</p>`,
-    `<a href="${unsubscribe}" style="color:#6f655e">Stop receiving couple requests</a> · <a href="${APP_URL}${listingHref(listing)}" style="color:#6f655e">Your listing</a>`,
+  const details = `<table style="border-collapse:collapse;margin:12px 0">${table}</table>
+     ${message ? `<p style="white-space:pre-line;border-left:3px solid #e8e0d8;padding-left:12px">${escapeHtml(message)}</p>` : ""}`;
+
+  const owner = await queryOne<{ user_id: string }>(
+    "SELECT user_id FROM listing_claims WHERE listing_type = $1 AND listing_id = $2 AND status = 'approved'",
+    [listing.listing_type, listing.listing_id],
   );
+  let subject: string;
+  let body: string;
+  if (owner) {
+    const [price, balance] = await Promise.all([leadPrice(listing.listing_type, listing.category), getBalance(owner.user_id)]);
+    subject = `New connection request from ${couple}${snapshot.when ? ` · ${snapshot.when}` : ""}`;
+    body = `<h1 style="font-family:Georgia,serif;font-weight:600">${escapeHtml(couple)} wants to connect with ${escapeHtml(listing.name)}</h1>
+     <p>You have a new connection request on Wedding Seeker. Here are their wedding details:</p>
+     ${details}
+     <p>Purchase this lead for <strong>${formatMoney(price)}</strong> to get the couple's email and phone number.</p>
+     <p>${button(`${APP_URL}/vendor/requests/${requestId}`, "View and purchase")}</p>
+     ${balance < price ? `<p style="color:#9c4f3c">Your wallet balance is ${formatMoney(balance)}, which isn't enough to purchase this lead. Add funds to your wallet first.</p>` : ""}`;
+  } else {
+    subject = `A couple wants to connect with ${listing.name} on Wedding Seeker`;
+    body = `<h1 style="font-family:Georgia,serif;font-weight:600">A couple is trying to connect with ${escapeHtml(listing.name)}</h1>
+     <p>${escapeHtml(couple)} found ${escapeHtml(listing.name)} on Wedding Seeker and sent a connection request. Here are their wedding details:</p>
+     ${details}
+     <p>Sign up for free and claim your listing to see this request and connect with the couple.</p>
+     <p>${button(`${APP_URL}/vendor/claim/${listing.listing_type}/${listing.listing_id}`, "Sign up and claim your listing")}</p>`;
+  }
   const inbound = process.env.INBOUND_REPLY_DOMAIN;
   return sendEmail({
     to: vendorRecipient(listing.connect_to!),
     from: CONNECT_FROM,
-    subject: `${isProductionEmail() ? "" : "[TEST] "}Wedding inquiry from ${couple}${snapshot.when ? ` · ${snapshot.when}` : ""}`,
-    html,
+    subject: `${isProductionEmail() ? "" : "[TEST] "}${subject}`,
+    html: layout(
+      body,
+      `<a href="${unsubscribe}" style="color:#6f655e">Stop receiving couple requests</a> · <a href="${APP_URL}${listingHref(listing)}" style="color:#6f655e">Your listing</a>`,
+    ),
     replyTo: inbound ? `reply+${requestId}@${inbound}` : undefined,
     headers: {
       "List-Unsubscribe": `<${unsubscribe}>`,
