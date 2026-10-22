@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { query } from "@/db";
 import { getCurrentUser, isPaid } from "@/lib/session";
 import { getWeddingProfile } from "@/lib/connections";
 import { missingWeddingFields } from "@/lib/wedding-requirements";
+import { notifyNewSignup } from "@/lib/signup-notice";
 import { isListingType, listingExists, saveListing } from "@/lib/saves";
 import { APP_URL } from "@/lib/urls";
 import { safeReturnPath } from "@/lib/utils";
@@ -39,6 +40,10 @@ export async function GET(request: Request) {
     await query("UPDATE users SET account_type = 'vendor' WHERE id = $1", [user.id]);
     user.account_type = "vendor";
   }
+  // After the vendor check so the notice has the final account type.
+  const userId = user.id;
+  after(() => notifyNewSignup(userId));
+
   if (user.account_type === "vendor") {
     const vendorPath = safeReturnPath(url.searchParams.get("return"), "/vendor");
     return NextResponse.redirect(`${APP_URL}${vendorPath.startsWith("/vendor") ? vendorPath : "/vendor"}`);

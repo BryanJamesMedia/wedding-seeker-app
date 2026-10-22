@@ -5,6 +5,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 export const FROM = process.env.EMAIL_FROM ?? "Wedding Seeker <onboarding@resend.dev>";
 export const CONNECT_FROM = process.env.CONNECT_EMAIL_FROM ?? FROM;
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "b@lekmedia.com";
+export const SIGNUP_NOTIFY_EMAIL = process.env.SIGNUP_NOTIFY_EMAIL ?? "connect@lekmedia.com";
 import { APP_URL } from "./urls";
 export { APP_URL };
 
