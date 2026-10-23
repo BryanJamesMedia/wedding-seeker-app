@@ -37,7 +37,7 @@ export async function GET(request: Request) {
            OR EXISTS (SELECT 1 FROM connection_requests WHERE user_id = $1) AS used`,
       [user.id],
     );
-    if (row?.used) return NextResponse.redirect(`${APP_URL}/vendor/sign-in?error=couple_account`);
+    if (row?.used) return NextResponse.redirect(`${APP_URL}/vendor/sign-up?error=couple_account`);
     await query("UPDATE users SET account_type = 'vendor' WHERE id = $1", [user.id]);
     user.account_type = "vendor";
   }
