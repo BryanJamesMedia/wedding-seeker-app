@@ -28,8 +28,8 @@ const CATEGORY_TILES = [
   ["Invitations", "vendor-florist"], ["Accommodations", "vendor-bar"], ["Restaurant Group Bookings", "vendor-catering"], ["Bridal Attire", "vendor-photo-video"],
 ] as const;
 
-const TRUST_POINTS = [
-  "Every venue and vendor in one place — no more jumping between a dozen listing sites.",
+const TRUST_POINTS: React.ReactNode[] = [
+  <>Every <span className="text-[#fff1a8]">Florida</span> venue and vendor in one place — no more jumping between a dozen listing sites.</>,
   "Describe the wedding you want in plain English. Our search understands vibe, not just keywords.",
   "Filter by location, distance, guest count, budget and style, then see the best fits first.",
   "Send your wedding details to the vendors you like in one click, and track every reply.",
@@ -78,7 +78,7 @@ export default async function Home() {
               The Smartest Way to Find Your Perfect <span className="text-[#fff1a8]">Florida</span> Wedding Venue &amp; Vendors
             </h1>
             <p className="mt-6 max-w-xl text-xl font-light text-white/85 md:text-2xl">
-              Search every venue and vendor near you, describe your dream wedding in your own words, and see the best fits first.
+              Search every <span className="text-[#fff1a8]">Florida</span> venue and vendor near you, describe your dream wedding in your own words, and see the best fits first.
             </p>
             <div className="mt-8 flex flex-col items-start">
               <SearchCta className="px-10 py-5">Start Your Search</SearchCta>
@@ -108,7 +108,7 @@ export default async function Home() {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('/landing/floral-roses-background.jpg')] bg-cover bg-center opacity-50" />
         <div className="relative mx-auto max-w-6xl px-4">
           <h2 className="mx-auto mb-16 max-w-4xl text-center font-serif text-3xl font-bold leading-tight text-balance">
-            Find Your Venue and Vendors in Minutes, Not Weekends
+            Find Your Florida Venues and Vendors in Minutes, From the Largest Florida Wedding Database
           </h2>
           <div className="grid items-center gap-12 md:grid-cols-2 lg:gap-16">
             <div className="relative">
@@ -127,7 +127,7 @@ export default async function Home() {
             </div>
             <div className="space-y-6">
               <h3 className="font-serif text-xl font-bold">Introducing Wedding Seeker</h3>
-              <p className="text-sm font-bold text-accent">The search engine built for wedding planning</p>
+              <p className="text-sm font-bold text-accent">The search engine built for Florida wedding planning</p>
               <div className="space-y-4 leading-relaxed text-muted">
                 <p>Tell us what you need and where — a venue, a photographer, a florist — then describe your wedding in your own words: your style, your guest count, the feeling you want.</p>
                 <p>We search every listing in your area and rank them by how well they match. No sponsored placements pushed to the top, no endless scrolling through options that were never a fit.</p>
@@ -146,7 +146,7 @@ export default async function Home() {
       {/* Database banner */}
       <section aria-label="Venue and vendor database">
         <div className="bg-navy px-4 py-10 text-center sm:py-12">
-          <h2 className="font-serif text-xl font-bold text-white sm:text-2xl md:text-3xl">The Largest Vendor and Venue Database in Florida</h2>
+          <h2 className="font-serif text-xl font-bold text-white sm:text-2xl md:text-3xl">The Largest Vendor and Venue Database in <span className="text-[#fff1a8]">Florida</span></h2>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-lg font-semibold text-white sm:text-xl">
             <span className="flex items-center gap-2.5"><Store className="h-5 w-5 text-coral" aria-hidden /><span className="font-bold text-coral">{counts.vendors.toLocaleString()}</span> Vendors</span>
             <span className="flex items-center gap-2.5"><Building2 className="h-5 w-5 text-coral" aria-hidden /><span className="font-bold text-coral">{counts.venues.toLocaleString()}</span> Venues</span>
@@ -176,11 +176,11 @@ export default async function Home() {
           <div className="space-y-6 text-white">
             <div className="space-y-2">
               <p className="text-sm font-semibold uppercase tracking-wider text-coral">The Wedding Seeker Difference</p>
-              <h2 className="font-serif text-4xl font-bold md:text-5xl">Why Couples Trust Wedding Seeker</h2>
+              <h2 className="font-serif text-4xl font-bold md:text-5xl">Why <span className="text-[#fff1a8]">Florida</span> Couples Trust Wedding Seeker</h2>
             </div>
             <ul className="space-y-3 text-white/90">
-              {TRUST_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-3">
+              {TRUST_POINTS.map((point, i) => (
+                <li key={i} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-coral/20"><Check className="h-4 w-4 text-coral" aria-hidden /></span>
                   <span>{point}</span>
                 </li>
@@ -250,7 +250,7 @@ export default async function Home() {
           <h2 className="font-serif text-4xl font-bold leading-tight text-navy text-balance md:text-5xl">Wedding Planning, Without the Burnout</h2>
           <div className="my-6 flex justify-center"><Heart className="h-4 w-4 fill-[#f3a8ad] text-[#f3a8ad]" aria-hidden /></div>
           <p className="mx-auto max-w-xl text-lg leading-relaxed text-muted">
-            Stop spending hours searching. Tell us what you want once and see every venue and vendor that fits — best matches first.
+            Stop spending hours searching. Tell us what you want once and see every Florida venue and vendor that fits — best matches first.
           </p>
           <div className="mt-8"><SearchCta className="px-10 py-4 text-base">Start Your Free Search</SearchCta></div>
           <p className="mt-6 text-sm text-muted">No sign-up needed to search.</p>
