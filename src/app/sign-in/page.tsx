@@ -16,7 +16,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
         <AuthStep
-          reason="signup"
+          reason="signin"
           inline
           returnTo={next}
           googleEnabled={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
