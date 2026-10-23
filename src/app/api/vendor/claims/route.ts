@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { notifyClaimSubmitted } from "@/lib/claim-notice";
 import { getCurrentUser } from "@/lib/session";
 import { isListingType } from "@/lib/saves";
 import { createClaim } from "@/lib/vendor";
@@ -24,5 +25,6 @@ export async function POST(request: Request) {
   }
   const result = await createClaim(user.id, { listingType: body.listingType, listingId: body.listingId }, input);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (result.status === "pending") after(() => notifyClaimSubmitted(result.claimId, result.isNew));
   return NextResponse.json({ status: result.status });
 }

@@ -47,7 +47,9 @@ export async function ownsListing(userId: string, ref: ListingRef): Promise<bool
 
 export type ClaimInput = { claimantName: string; claimantRole: string; claimantPhone: string; note: string | null };
 
-export type ClaimResult = { ok: true; status: ClaimStatus } | { ok: false; status: number; error: string };
+export type ClaimResult =
+  | { ok: true; status: ClaimStatus; claimId: string; isNew: boolean }
+  | { ok: false; status: number; error: string };
 
 export async function createClaim(userId: string, ref: ListingRef, input: ClaimInput): Promise<ClaimResult> {
   const listing = await queryOne(
@@ -63,7 +65,7 @@ export async function createClaim(userId: string, ref: ListingRef, input: ClaimI
     return { ok: false, status: 409, error: "This listing has already been claimed. Contact support if this is your business." };
   }
   // Re-submitting after a rejection puts the claim back in the review queue.
-  const row = await queryOne<{ status: ClaimStatus }>(
+  const row = await queryOne<{ id: string; status: ClaimStatus; is_new: boolean }>(
     `INSERT INTO listing_claims (user_id, listing_type, listing_id, claimant_name, claimant_role, claimant_phone, note)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (user_id, listing_type, listing_id) DO UPDATE SET
@@ -71,10 +73,10 @@ export async function createClaim(userId: string, ref: ListingRef, input: ClaimI
        claimant_phone = EXCLUDED.claimant_phone, note = EXCLUDED.note,
        status = CASE WHEN listing_claims.status = 'rejected' THEN 'pending' ELSE listing_claims.status END,
        reviewed_at = CASE WHEN listing_claims.status = 'rejected' THEN NULL ELSE listing_claims.reviewed_at END
-     RETURNING status`,
+     RETURNING id, status, (xmax = 0) AS is_new`,
     [userId, ref.listingType, ref.listingId, input.claimantName, input.claimantRole, input.claimantPhone, input.note],
   );
-  return { ok: true, status: row!.status };
+  return { ok: true, status: row!.status, claimId: row!.id, isNew: row!.is_new };
 }
 
 type FieldKind = "text" | "textarea" | "list" | "number" | "email" | "url";
