@@ -8,6 +8,7 @@ const ITEMS = [
   ["/vendor/requests", "Connection Requests"],
   ["/vendor/leads", "Your Leads"],
   ["/vendor/claim", "Claim Your Listing"],
+  ["/vendor/add", "Add Your Listing"],
   ["/vendor/listings", "Edit Your Listing"],
 ] as const;
 
