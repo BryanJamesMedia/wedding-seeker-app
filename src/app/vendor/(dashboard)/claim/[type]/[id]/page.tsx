@@ -8,7 +8,7 @@ import { ClaimForm } from "./form";
 
 export default async function ClaimListingPage({ params }: PageProps<"/vendor/claim/[type]/[id]">) {
   const { type, id } = await params;
-  const user = await requireVendor(`/vendor/claim/${type}/${id}`);
+  const user = await requireVendor(`/vendor/claim/${type}/${id}`, { signUp: true });
   if (!isListingType(type)) notFound();
   const listing = await queryOne<{ name: string; category: string | null; city: string | null; state: string | null; mine: string | null; taken: boolean }>(
     `SELECT l.name, l.category, l.city, l.state,

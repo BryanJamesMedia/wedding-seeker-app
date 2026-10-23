@@ -135,6 +135,8 @@ export function AuthStep({
   googleEnabled,
   returnTo,
   inline = false,
+  hideHeading = false,
+  switchHref,
   vendor = false,
 }: {
   reason: AuthReason;
@@ -144,6 +146,10 @@ export function AuthStep({
   googleEnabled: boolean;
   returnTo?: string;
   inline?: boolean;
+  /** The page shows its own heading. */
+  hideHeading?: boolean;
+  /** Link to a separate sign-in/sign-up page instead of switching in place. */
+  switchHref?: string;
 }) {
   const [signingIn, setSigningIn] = useState(reason === "signin");
   const [email, setEmail] = useState("");
@@ -191,16 +197,18 @@ export function AuthStep({
   return (
     <div className="relative p-6">
       {inline ? null : <CloseButton />}
-      <h2 id="gate-title" className="pr-8 font-serif text-2xl font-semibold">
-        {action ? headlines[topic].replace("this vendor", action.name) : headlines[topic]}
-      </h2>
+      {hideHeading ? null : (
+        <h2 id="gate-title" className="pr-8 font-serif text-2xl font-semibold">
+          {action ? headlines[topic].replace("this vendor", action.name) : headlines[topic]}
+        </h2>
+      )}
       {status === "sent" ? (
         <p className="mt-4 text-sm text-muted" role="status">
           Check <strong className="text-foreground">{email}</strong> for your sign-in link. It expires in 10 minutes.
         </p>
       ) : (
         <>
-          <p className="mt-2 text-sm text-muted">
+          <p className={hideHeading ? "text-sm text-muted" : "mt-2 text-sm text-muted"}>
             {signingIn ? "We'll email you a sign-in link. No password needed." : "Takes 30 seconds. No password needed."}
           </p>
           {signingIn ? null : (
@@ -257,16 +265,22 @@ export function AuthStep({
           </form>
           <p className="mt-4 text-center text-sm text-muted">
             {signingIn ? "New to Wedding Seeker? " : "Already have an account? "}
-            <button
-              type="button"
-              onClick={() => {
-                setSigningIn(!signingIn);
-                setError(null);
-              }}
-              className="font-medium text-accent underline underline-offset-2"
-            >
-              {signingIn ? "Create an account" : "Sign in"}
-            </button>
+            {switchHref ? (
+              <a href={switchHref} className="font-medium text-accent underline underline-offset-2">
+                {signingIn ? "Create an account" : "Sign in"}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSigningIn(!signingIn);
+                  setError(null);
+                }}
+                className="font-medium text-accent underline underline-offset-2"
+              >
+                {signingIn ? "Create an account" : "Sign in"}
+              </button>
+            )}
           </p>
         </>
       )}
