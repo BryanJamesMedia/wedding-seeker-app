@@ -75,7 +75,7 @@ export default async function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-24 pt-16 md:pb-32 md:pt-24 lg:grid-cols-[1fr_auto] lg:gap-16">
           <div className="max-w-2xl">
             <h1 className="font-serif text-4xl font-bold leading-tight text-white text-balance md:text-5xl">
-              The Smartest Way to Find Your Perfect Wedding Venue &amp; Vendors
+              The Smartest Way to Find Your Perfect <span className="text-[#fff1a8]">Florida</span> Wedding Venue &amp; Vendors
             </h1>
             <p className="mt-6 max-w-xl text-xl font-light text-white/85 md:text-2xl">
               Search every venue and vendor near you, describe your dream wedding in your own words, and see the best fits first.
