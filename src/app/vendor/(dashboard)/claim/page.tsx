@@ -26,7 +26,9 @@ export default async function ClaimSearchPage({ searchParams }: PageProps<"/vend
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-semibold">Claim your listing</h1>
-        <p className="mt-1 text-sm text-muted">Search for your venue or business by name, then claim it.</p>
+        <p className="mt-1 text-sm text-muted">Search for your venue or business by name, then claim it. Can&apos;t find it?{" "}
+          <Link href="/vendor/add" className="underline">Add your listing</Link>.
+        </p>
       </div>
       <form className="flex flex-wrap gap-2 rounded-3xl border border-border bg-card p-4">
         <input name="q" defaultValue={q} required placeholder="Business name" aria-label="Business name" className="min-w-0 flex-1 rounded-full border border-border px-4 py-2" />
@@ -55,7 +57,9 @@ export default async function ClaimSearchPage({ searchParams }: PageProps<"/vend
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">No listings found. Try a shorter name, or leave out the city.</p>
+          <p className="text-sm text-muted">No listings found. Try a shorter name, or leave out the city. Still can&apos;t find it?{" "}
+            <Link href="/vendor/add" className="underline">Add your listing</Link>.
+          </p>
         )
       ) : null}
     </div>
