@@ -2,7 +2,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { getCurrentUser, type AppUser } from "./session";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "b@lekmedia.com")
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "dev@lekmedia.com")
   .split(",")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
