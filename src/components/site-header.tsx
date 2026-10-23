@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from "../../public/brand/wedding-seeker-logo-black.png";
 import { getViewer } from "@/lib/session";
+import { isAdmin } from "@/lib/admin";
 import { AuthButtons } from "./auth-buttons";
 
 export async function SiteHeader() {
@@ -26,6 +27,11 @@ export async function SiteHeader() {
             {viewer.user ? (
               <Link href={viewer.user.account_type === "vendor" ? "/vendor" : "/dashboard"} className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent">
                 Dashboard
+              </Link>
+            ) : null}
+            {isAdmin(viewer.user) ? (
+              <Link href="/admin" className="rounded-full px-3 py-2 font-medium text-foreground hover:text-accent">
+                Admin
               </Link>
             ) : null}
             <AuthButtons signedIn={Boolean(viewer.user)} />

@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { query } from "@/db";
 import { getCurrentUser, isPaid } from "@/lib/session";
+import { isAdmin } from "@/lib/admin";
 import { getWeddingProfile } from "@/lib/connections";
 import { missingWeddingFields } from "@/lib/wedding-requirements";
 import { notifyNewSignup } from "@/lib/signup-notice";
@@ -48,6 +49,8 @@ export async function GET(request: Request) {
     const vendorPath = safeReturnPath(url.searchParams.get("return"), "/vendor");
     return NextResponse.redirect(`${APP_URL}${vendorPath.startsWith("/vendor") ? vendorPath : "/vendor"}`);
   }
+
+  if (isAdmin(user) && !url.searchParams.get("return")) return NextResponse.redirect(`${APP_URL}/admin`);
 
   const kind = url.searchParams.get("action");
   const type = url.searchParams.get("type");
