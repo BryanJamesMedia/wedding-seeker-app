@@ -7,8 +7,10 @@ export type PendingAction =
   | { kind: "save"; listingType: "venue" | "vendor"; listingId: string; name: string }
   | { kind: "connect"; listingType: "venue" | "vendor"; listingId: string; name: string };
 
+type AuthReason = "signup" | "signin" | "save" | "connect";
+
 type ModalState =
-  | { mode: "auth"; reason: "signup" | "save" | "connect"; action?: PendingAction }
+  | { mode: "auth"; reason: AuthReason; action?: PendingAction }
   | { mode: "upgrade"; action?: PendingAction }
   | { mode: "welcome" }
   | null;
@@ -20,7 +22,7 @@ function setState(next: ModalState) {
   for (const l of listeners) l();
 }
 
-export function openAuthModal(args: { reason: "signup" | "save" | "connect"; action?: PendingAction }) {
+export function openAuthModal(args: { reason: AuthReason; action?: PendingAction }) {
   setState({ mode: "auth", ...args });
 }
 
@@ -48,6 +50,12 @@ const HEADLINES = {
   signup: "Create your free account",
   save: "Create a free account to save this vendor",
   connect: "Create a free account to connect with this vendor",
+};
+
+const SIGN_IN_HEADLINES = {
+  signup: "Welcome back",
+  save: "Sign in to save this vendor",
+  connect: "Sign in to connect with this vendor",
 };
 
 export function GateModal({ googleEnabled }: { googleEnabled: boolean }) {
@@ -129,7 +137,7 @@ export function AuthStep({
   inline = false,
   vendor = false,
 }: {
-  reason: "signup" | "save" | "connect";
+  reason: AuthReason;
   /** Vendor sign-up: /auth/continue marks a new account as a vendor account. */
   vendor?: boolean;
   action?: PendingAction;
@@ -137,6 +145,7 @@ export function AuthStep({
   returnTo?: string;
   inline?: boolean;
 }) {
+  const [signingIn, setSigningIn] = useState(reason === "signin");
   const [email, setEmail] = useState("");
   const [terms, setTerms] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -145,15 +154,17 @@ export function AuthStep({
 
   const callbackURL = () => {
     const url = new URL(continueUrl(action, returnTo), window.location.origin);
-    url.searchParams.set("terms", "1");
-    if (marketing) url.searchParams.set("marketing", "1");
+    if (!signingIn) {
+      url.searchParams.set("terms", "1");
+      if (marketing) url.searchParams.set("marketing", "1");
+    }
     if (vendor) url.searchParams.set("vendor", "1");
     return url.pathname + url.search;
   };
 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
-    if (!terms) {
+    if (!signingIn && !terms) {
       setError("Please agree to the Terms and Privacy Policy.");
       return;
     }
@@ -167,18 +178,21 @@ export function AuthStep({
   }
 
   async function google() {
-    if (!terms) {
+    if (!signingIn && !terms) {
       setError("Please agree to the Terms and Privacy Policy.");
       return;
     }
     await signIn.social({ provider: "google", callbackURL: callbackURL() });
   }
 
+  const topic = reason === "signin" ? "signup" : reason;
+  const headlines = signingIn ? SIGN_IN_HEADLINES : HEADLINES;
+
   return (
     <div className="relative p-6">
       {inline ? null : <CloseButton />}
       <h2 id="gate-title" className="pr-8 font-serif text-2xl font-semibold">
-        {action ? HEADLINES[reason].replace("this vendor", action.name) : HEADLINES[reason]}
+        {action ? headlines[topic].replace("this vendor", action.name) : headlines[topic]}
       </h2>
       {status === "sent" ? (
         <p className="mt-4 text-sm text-muted" role="status">
@@ -186,21 +200,25 @@ export function AuthStep({
         </p>
       ) : (
         <>
-          <p className="mt-2 text-sm text-muted">Takes 30 seconds. No password needed.</p>
-          <div className="mt-5 space-y-3 text-sm">
-            <label className="flex items-start gap-2">
-              <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
-              <span>
-                I agree to the{" "}
-                <a href="/terms" target="_blank" className="underline">Terms</a> and{" "}
-                <a href="/privacy" target="_blank" className="underline">Privacy Policy</a>.
-              </span>
-            </label>
-            <label className="flex items-start gap-2">
-              <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
-              <span>Send me wedding planning tips and offers (optional).</span>
-            </label>
-          </div>
+          <p className="mt-2 text-sm text-muted">
+            {signingIn ? "We'll email you a sign-in link. No password needed." : "Takes 30 seconds. No password needed."}
+          </p>
+          {signingIn ? null : (
+            <div className="mt-5 space-y-3 text-sm">
+              <label className="flex items-start gap-2">
+                <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
+                <span>
+                  I agree to the{" "}
+                  <a href="/terms" target="_blank" className="underline">Terms</a> and{" "}
+                  <a href="/privacy" target="_blank" className="underline">Privacy Policy</a>.
+                </span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 size-4 accent-[var(--accent)]" />
+                <span>Send me wedding planning tips and offers (optional).</span>
+              </label>
+            </div>
+          )}
           {googleEnabled ? (
             <>
               <button
@@ -237,6 +255,19 @@ export function AuthStep({
               {status === "sending" ? "Sending…" : "Email me a sign-in link"}
             </button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted">
+            {signingIn ? "New to Wedding Seeker? " : "Already have an account? "}
+            <button
+              type="button"
+              onClick={() => {
+                setSigningIn(!signingIn);
+                setError(null);
+              }}
+              className="font-medium text-accent underline underline-offset-2"
+            >
+              {signingIn ? "Create an account" : "Sign in"}
+            </button>
+          </p>
         </>
       )}
       {error ? (
