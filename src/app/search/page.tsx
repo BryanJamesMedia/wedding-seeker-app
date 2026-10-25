@@ -3,6 +3,7 @@ import Link from "next/link";
 import { after } from "next/server";
 import { logSearch, timedSearch } from "@/lib/search-log";
 import { SearchPanel } from "@/components/search-panel";
+import { AdvisorCta } from "@/components/advisor-cta";
 import { ResultCard } from "@/components/result-card";
 import { SaveSearchButton } from "@/components/save-search-button";
 import { getConfig } from "@/lib/config";
@@ -35,7 +36,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[340px_1fr]">
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
         <SearchPanel
           compact
           categories={categories}
@@ -49,6 +50,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
             filters: params.filters,
           }}
         />
+        <AdvisorCta defaultName={viewer.user?.name ?? ""} defaultEmail={viewer.user?.account_type === "couple" ? viewer.user.email : ""} />
       </aside>
 
       <section aria-labelledby="results-heading" aria-live="polite">
