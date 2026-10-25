@@ -5,6 +5,23 @@ export const LISTING_TYPES: { value: ListingType; label: string }[] = [
   { value: "vendor", label: "Vendors" },
 ];
 
+/** Category spellings that mean the same thing, mapped to the one we keep (see db/migrations/0012). */
+const CATEGORY_ALIASES: Record<string, string> = {
+  catering_food_drink: "catering_food_drinks",
+};
+
+/** lower(btrim(category)) with known duplicate spellings folded into one. */
+export function canonicalCategory(category: string): string {
+  const key = category.trim().toLowerCase();
+  return CATEGORY_ALIASES[key] ?? key;
+}
+
+/** SQL version of `canonicalCategory` for a column expression. */
+export function canonicalCategorySql(column: string): string {
+  const cases = Object.entries(CATEGORY_ALIASES).map(([from, to]) => `WHEN '${from}' THEN '${to}'`).join(" ");
+  return `(CASE lower(btrim(${column})) ${cases} ELSE lower(btrim(${column})) END)`;
+}
+
 const UPPERCASE = new Set(["dj", "djs", "bbq", "av", "diy", "lgbtq", "vip", "us", "usa"]);
 const LOWERCASE = new Set(["and", "or", "of", "the", "for", "a", "an", "in", "on", "to", "with"]);
 
