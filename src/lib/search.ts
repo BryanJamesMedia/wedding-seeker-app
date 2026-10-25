@@ -1,5 +1,5 @@
 import "server-only";
-import type { ListingType } from "@/lib/categories";
+import { canonicalCategory, canonicalCategorySql, type ListingType } from "@/lib/categories";
 import { query } from "@/db";
 import { getConfig } from "./config";
 import type { AppConfig, FilterDef, MatchLabelConfig } from "./config-defaults";
@@ -45,7 +45,7 @@ export function parseSearchParams(raw: Record<string, string | string[] | undefi
   }
   return {
     listingType: type === "venue" || type === "vendor" ? type : null,
-    categories: many("category"),
+    categories: [...new Set(many("category").map(canonicalCategory))],
     location: one("location").slice(0, 120),
     radius: (RADIUS_OPTIONS as readonly number[]).includes(radius) ? radius : 25,
     description: one("q").slice(0, 500),
@@ -236,7 +236,7 @@ export async function searchListings(params: SearchParams, viewer: Viewer): Prom
   sql.where.push("l.status = 'active'");
   if (params.listingType) sql.where.push(`l.listing_type = ${sql.add(params.listingType)}`);
   if (params.categories.length > 0) {
-    sql.where.push(`lower(btrim(l.category)) = ANY(${sql.add(params.categories.map((c) => c.trim().toLowerCase()))})`);
+    sql.where.push(`${canonicalCategorySql("l.category")} = ANY(${sql.add(params.categories.map(canonicalCategory))})`);
   }
 
   let distanceExpr = "NULL::float8";
@@ -372,8 +372,8 @@ export function toQueryString(params: Partial<SearchParams>): string {
 
 export async function listCategories(): Promise<{ category: string; listingType: "venue" | "vendor"; count: number }[]> {
   const rows = await query<{ category: string; listing_type: "venue" | "vendor"; count: string }>(
-    `SELECT min(btrim(category)) AS category, listing_type, count(*) AS count FROM listings
-     WHERE status = 'active' AND nullif(btrim(category), '') IS NOT NULL GROUP BY listing_type, lower(btrim(category))
+    `SELECT ${canonicalCategorySql("category")} AS category, listing_type, count(*) AS count FROM listings
+     WHERE status = 'active' AND nullif(btrim(category), '') IS NOT NULL GROUP BY listing_type, 1
      ORDER BY listing_type DESC, count(*) DESC`,
   );
   return rows.map((r) => ({ category: r.category, listingType: r.listing_type, count: Number(r.count) }));
