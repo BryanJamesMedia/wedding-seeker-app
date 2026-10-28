@@ -19,7 +19,7 @@ export default async function ConnectionDetailPage({ params }: { params: Promise
   const meta: [string, React.ReactNode][] = [
     ["Status", connectionStatus(c)],
     ["Requested", when(c.created_at)],
-    ["Vendor / venue", href ? <a href={href} target="_blank" rel="noreferrer" className="text-accent underline">{c.listing_name}</a> : c.listing_name],
+    ["Vendor / venue", href ? <a href={href} target="_blank" rel="noreferrer" className="text-accent underline">{c.listing_name}</a> : (c.listing_name ?? "Deleted listing")],
     ["Vendor location", [c.city, c.state].filter(Boolean).join(", ")],
     ["Sent to", c.vendor_email],
     ["Couple account email", c.account_email ?? "Deleted account"],

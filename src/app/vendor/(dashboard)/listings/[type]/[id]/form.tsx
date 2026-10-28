@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 
-type Field = { key: string; label: string; kind: string; group: string };
+type Field = { key: string; label: string; kind: string; group: string; options?: { value: string; label: string }[] };
 
-export function EditListingForm({ listingType, listingId, fields, values, fallbackEmail }: {
+export function EditListingForm({ listingType, listingId, fields, values, fallbackEmail, endpoint = "/api/vendor/listings" }: {
   listingType: string;
   listingId: string;
   fields: Field[];
   values: Record<string, string>;
   fallbackEmail: string | null;
+  endpoint?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export function EditListingForm({ listingType, listingId, fields, values, fallba
     e.preventDefault();
     setStatus("saving");
     setError(null);
-    const res = await fetch("/api/vendor/listings", {
+    const res = await fetch(endpoint, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ listingType, listingId, values: Object.fromEntries(new FormData(e.currentTarget)) }),
@@ -41,11 +42,16 @@ export function EditListingForm({ listingType, listingId, fields, values, fallba
           {fields.filter((f) => f.group === group).map((f) => (
             <label key={f.key} className="block text-sm font-medium">
               {f.label}
-              {f.kind === "textarea" || f.kind === "list" ? (
+              {f.kind === "select" ? (
+                <select name={f.key} defaultValue={values[f.key]} className={input}>
+                  {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              ) : f.kind === "textarea" || f.kind === "list" ? (
                 <textarea name={f.key} defaultValue={values[f.key]} rows={f.kind === "list" ? 4 : f.key === "description" ? 8 : 3} className={input} />
               ) : (
                 <input
                   name={f.key}
+                  required={f.key === "name"}
                   defaultValue={values[f.key]}
                   type={f.kind === "email" ? "email" : f.kind === "number" ? "number" : "text"}
                   min={f.kind === "number" ? 0 : undefined}

@@ -299,7 +299,7 @@ export async function listConnections(): Promise<TableRow[]> {
       guests: s.guest_count ?? null,
       budget: s.budget_range ?? null,
       location: s.location_text ?? null,
-      listing: c.listing_name,
+      listing: c.listing_name ?? "Deleted listing",
       listing_href: publicHref(c),
       type: typeLabel(c.listing_type, c.category),
       listing_location: place(c.city, c.state),
