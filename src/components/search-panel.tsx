@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
 import type { FilterDef } from "@/lib/config-defaults";
 import { categoryLabel, LISTING_TYPES, type ListingType } from "@/lib/categories";
+import { VENUE_TYPE_GROUPS, venueTypeLabel } from "@/lib/venue-types";
 
 const PLACEHOLDERS = [
   "Relaxed boho beach ceremony for about 60 guests, sunset, nothing too formal",
@@ -16,6 +17,7 @@ const PLACEHOLDERS = [
 export type SearchPanelValues = {
   listingType: ListingType | null;
   categories: string[];
+  venueTypes: string[];
   location: string;
   radius: number;
   description: string;
@@ -83,6 +85,7 @@ export function SearchPanel({
     const qs = new URLSearchParams();
     qs.set("type", values.listingType);
     for (const c of values.categories) qs.append("category", c);
+    if (values.listingType === "venue") for (const v of values.venueTypes) qs.append("venue_type", v);
     qs.set("location", values.location.trim());
     qs.set("radius", String(values.radius));
     if (values.description.trim()) qs.set("q", values.description.trim());
@@ -116,6 +119,11 @@ export function SearchPanel({
       ...v,
       categories: v.categories.includes(category) ? v.categories.filter((x) => x !== category) : [...v.categories, category],
     }));
+  const toggleVenueType = (type: string) =>
+    setValues((v) => ({
+      ...v,
+      venueTypes: v.venueTypes.includes(type) ? v.venueTypes.filter((x) => x !== type) : [...v.venueTypes, type],
+    }));
 
   return (
     <form onSubmit={submit} className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${compact ? "" : "sm:p-6"}`} aria-label="Search">
@@ -134,7 +142,11 @@ export function SearchPanel({
                   name={`${id}-type`}
                   value={t.value}
                   checked={on}
-                  onChange={() => setValues((v) => ({ ...v, listingType: t.value, categories: v.listingType === t.value ? v.categories : [] }))}
+                  onChange={() =>
+                    setValues((v) =>
+                      v.listingType === t.value ? v : { ...v, listingType: t.value, categories: [], venueTypes: [] },
+                    )
+                  }
                   className="sr-only"
                 />
                 {t.label}
@@ -144,27 +156,27 @@ export function SearchPanel({
         </div>
       </fieldset>
 
+      {values.listingType === "venue" ? (
+        <div className="mt-4">
+          <span id={`${id}-vtype-label`} className={label}>Venue type</span>
+          <CategoryPicker
+            labelledBy={`${id}-vtype-label`}
+            options={VENUE_TYPE_GROUPS.map((g) => g.value)}
+            selected={values.venueTypes}
+            onToggle={toggleVenueType}
+            labelOf={venueTypeLabel}
+            noun="venue types"
+            sortByLabel={false}
+          />
+          <SelectedTags label="Selected venue types" items={values.venueTypes} labelOf={venueTypeLabel} onRemove={toggleVenueType} />
+        </div>
+      ) : null}
+
       {values.listingType && typeCategories.length > 1 ? (
         <div className="mt-4">
           <span id={`${id}-cat-label`} className={label}>Categories</span>
           <CategoryPicker labelledBy={`${id}-cat-label`} options={typeCategories} selected={values.categories} onToggle={toggleCategory} />
-          {values.categories.length > 0 ? (
-            <ul aria-label="Selected categories" className="mt-2 flex flex-wrap gap-2">
-              {values.categories.map((c) => (
-                <li key={c}>
-                  <button
-                    type="button"
-                    onClick={() => toggleCategory(c)}
-                    aria-label={`Remove ${categoryLabel(c)}`}
-                    className="inline-flex items-center gap-1 rounded-full border border-accent bg-accent py-1.5 pl-3 pr-2 text-sm text-white hover:bg-accent-strong"
-                  >
-                    {categoryLabel(c)}
-                    <X className="h-3.5 w-3.5" aria-hidden />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <SelectedTags label="Selected categories" items={values.categories} labelOf={categoryLabel} onRemove={toggleCategory} />
         </div>
       ) : null}
 
@@ -242,16 +254,53 @@ export function SearchPanel({
   );
 }
 
+function SelectedTags({
+  label,
+  items,
+  labelOf,
+  onRemove,
+}: {
+  label: string;
+  items: string[];
+  labelOf: (value: string) => string;
+  onRemove: (value: string) => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <ul aria-label={label} className="mt-2 flex flex-wrap gap-2">
+      {items.map((c) => (
+        <li key={c}>
+          <button
+            type="button"
+            onClick={() => onRemove(c)}
+            aria-label={`Remove ${labelOf(c)}`}
+            className="inline-flex items-center gap-1 rounded-full border border-accent bg-accent py-1.5 pl-3 pr-2 text-sm text-white hover:bg-accent-strong"
+          >
+            {labelOf(c)}
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CategoryPicker({
   labelledBy,
   options,
   selected,
   onToggle,
+  labelOf = categoryLabel,
+  noun = "categories",
+  sortByLabel = true,
 }: {
   labelledBy: string;
   options: string[];
   selected: string[];
   onToggle: (category: string) => void;
+  labelOf?: (value: string) => string;
+  noun?: string;
+  sortByLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
@@ -277,10 +326,10 @@ function CategoryPicker({
     };
   }, [open]);
 
-  const sorted = [...options].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b)));
-  const shown = sorted.filter((o) => categoryLabel(o).toLowerCase().includes(filter.trim().toLowerCase()));
+  const sorted = sortByLabel ? [...options].sort((a, b) => labelOf(a).localeCompare(labelOf(b))) : options;
+  const shown = sorted.filter((o) => labelOf(o).toLowerCase().includes(filter.trim().toLowerCase()));
   const summary =
-    selected.length === 0 ? "All categories" : selected.length === 1 ? categoryLabel(selected[0]) : `${selected.length} categories selected`;
+    selected.length === 0 ? `All ${noun}` : selected.length === 1 ? labelOf(selected[0]) : `${selected.length} ${noun} selected`;
 
   return (
     <div ref={ref} className="relative">
@@ -306,7 +355,7 @@ function CategoryPicker({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Type to filter…"
-                aria-label="Filter categories"
+                aria-label={`Filter ${noun}`}
                 className="w-full rounded-lg border border-border px-2.5 py-1.5 text-sm"
               />
             </div>
@@ -315,10 +364,10 @@ function CategoryPicker({
             {shown.map((o) => (
               <label key={o} className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm hover:bg-accent-soft">
                 <input type="checkbox" checked={selected.includes(o)} onChange={() => onToggle(o)} className="size-4 accent-[var(--accent)]" />
-                {categoryLabel(o)}
+                {labelOf(o)}
               </label>
             ))}
-            {shown.length === 0 ? <p className="px-3 py-2 text-sm text-muted">No matching categories</p> : null}
+            {shown.length === 0 ? <p className="px-3 py-2 text-sm text-muted">No matching {noun}</p> : null}
           </div>
         </div>
       ) : null}

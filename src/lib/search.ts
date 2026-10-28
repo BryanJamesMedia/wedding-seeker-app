@@ -7,6 +7,7 @@ import { EMBEDDING_MODEL, getQueryEmbedding } from "./embeddings";
 import { gateListing, type Viewer } from "./gating";
 import { resolveLocation, type ResolvedLocation } from "./location";
 import { listingKey, mainPhotos } from "./photos";
+import { isVenueTypeGroup, venueTypeLabel } from "./venue-types";
 
 export const RADIUS_OPTIONS = [10, 25, 50, 100] as const;
 export const SORT_OPTIONS = ["best", "distance", "rating"] as const;
@@ -16,6 +17,7 @@ const METERS_PER_MILE = 1609.344;
 export type SearchParams = {
   listingType: ListingType | null;
   categories: string[];
+  venueTypes: string[];
   location: string;
   radius: number;
   description: string;
@@ -46,6 +48,7 @@ export function parseSearchParams(raw: Record<string, string | string[] | undefi
   return {
     listingType: type === "venue" || type === "vendor" ? type : null,
     categories: [...new Set(many("category").map(canonicalCategory))],
+    venueTypes: type === "venue" ? [...new Set(many("venue_type").filter(isVenueTypeGroup))] : [],
     location: one("location").slice(0, 120),
     radius: (RADIUS_OPTIONS as readonly number[]).includes(radius) ? radius : 25,
     description: one("q").slice(0, 500),
@@ -238,6 +241,11 @@ export async function searchListings(params: SearchParams, viewer: Viewer): Prom
   if (params.categories.length > 0) {
     sql.where.push(`${canonicalCategorySql("l.category")} = ANY(${sql.add(params.categories.map(canonicalCategory))})`);
   }
+  if (params.venueTypes.length > 0) {
+    // venue_type holds group names written by the database trigger, and no group name contains another.
+    const patterns = params.venueTypes.map((v) => `%${venueTypeLabel(v)}%`);
+    sql.where.push(`l.listing_type = 'venue' AND l.venue_type LIKE ANY(${sql.add(patterns)})`);
+  }
 
   let distanceExpr = "NULL::float8";
   if (location) {
@@ -349,6 +357,10 @@ function widenHint(params: SearchParams): { label: string; href: string } | null
     next.set("radius", String(larger));
     return { label: `Expand to ${larger} miles`, href: `/search?${next}` };
   }
+  if (params.venueTypes.length > 0) {
+    next.delete("venue_type");
+    return { label: "Search all venue types", href: `/search?${next}` };
+  }
   if (params.categories.length > 0) {
     next.delete("category");
     return { label: "Search all categories", href: `/search?${next}` };
@@ -360,6 +372,7 @@ export function toQueryString(params: Partial<SearchParams>): string {
   const qs = new URLSearchParams();
   if (params.listingType) qs.set("type", params.listingType);
   for (const c of params.categories ?? []) qs.append("category", c);
+  for (const v of params.venueTypes ?? []) qs.append("venue_type", v);
   if (params.location) qs.set("location", params.location);
   if (params.radius) qs.set("radius", String(params.radius));
   if (params.description) qs.set("q", params.description);
