@@ -5,6 +5,7 @@ import { getVendor } from "@/lib/admin-data";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { CreditForm } from "../../client";
 import { AdminTable } from "../../table";
+import { DeleteVendorButton } from "./delete-vendor";
 
 export const metadata = { title: "Vendor · Admin" };
 
@@ -18,7 +19,10 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
     <div className="space-y-8">
       <div>
         <Link href="/admin/vendors" className="text-sm text-accent hover:underline">← Vendors</Link>
-        <h1 className="mt-2 font-serif text-3xl font-semibold">{String(v.email)}</h1>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-serif text-3xl font-semibold">{String(v.email)}</h1>
+          <DeleteVendorButton userId={id} email={String(v.email)} owned={Number(v.owned)} balanceCents={Number(v.balance)} leads={Number(v.leads)} />
+        </div>
         <p className="text-sm text-muted">
           {[v.contact, v.phone, `Signed up ${formatDate(String(v.signed_up))}`].filter(Boolean).join(" · ")}
         </p>

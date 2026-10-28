@@ -77,15 +77,15 @@ export function button(href: string, label: string, color = "#9c4f3c"): string {
   return `<a href="${href}" style="background:${color};color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;font-family:system-ui,sans-serif;font-size:14px;margin:4px 8px 4px 0">${escapeHtml(label)}</a>`;
 }
 
-export function sendMagicLinkEmail(to: string, url: string) {
+export function sendSignInCodeEmail(to: string, code: string) {
   return sendEmail({
     to,
-    subject: "Your Wedding Seeker sign-in link",
+    subject: `${code} is your Wedding Seeker code`,
     html: layout(
-      `<h1 style="font-size:22px;font-weight:normal">Sign in to Wedding Seeker</h1>
-       <p>Click below to sign in. This link expires in 10 minutes.</p>
-       <p>${button(url, "Sign in")}</p>
-       <p style="font-size:13px;color:#7a716b">If you didn't request this, you can ignore this email.</p>`,
+      `<h1 style="font-size:22px;font-weight:normal">Your Wedding Seeker code</h1>
+       <p>Enter this code on the Wedding Seeker page where you asked for it. It expires in 10 minutes.</p>
+       <p style="font-size:32px;font-weight:bold;letter-spacing:8px;margin:24px 0">${code}</p>
+       <p style="font-size:13px;color:#7a716b">If you didn't request this, you can ignore this email. No account is created unless the code is entered.</p>`,
     ),
   });
 }

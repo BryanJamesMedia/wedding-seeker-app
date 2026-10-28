@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { pool, query } from "@/db";
+import { query } from "@/db";
+import { deleteUserAccount } from "@/lib/account-delete";
 import { getCurrentUser } from "@/lib/session";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 
@@ -30,23 +31,7 @@ export async function DELETE() {
   if (user.stripe_subscription_id && isStripeConfigured()) {
     await stripe().subscriptions.cancel(user.stripe_subscription_id).catch((e) => console.error("[account] cancel failed", e));
   }
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      `UPDATE connection_requests SET wedding_snapshot = wedding_snapshot - 'contact_email' - 'contact_phone' - 'partner1_name' - 'partner2_name', message = NULL
-       WHERE user_id = $1`,
-      [user.id],
-    );
-    await client.query("DELETE FROM search_logs WHERE user_id = $1", [user.id]);
-    await client.query("DELETE FROM users WHERE id = $1", [user.id]);
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  await deleteUserAccount(user.id);
   const res = NextResponse.json({ ok: true });
   for (const name of ["better-auth.session_token", "__Secure-better-auth.session_token"]) res.cookies.delete(name);
   return res;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { signIn } from "@/lib/auth-client";
+import { authClient, signIn } from "@/lib/auth-client";
 
 export type PendingAction =
   | { kind: "save"; listingType: "venue" | "vendor"; listingId: string; name: string }
@@ -155,7 +155,8 @@ export function AuthStep({
   const [email, setEmail] = useState("");
   const [terms, setTerms] = useState(false);
   const [marketing, setMarketing] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "verifying" | "error">("idle");
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const callbackURL = () => {
@@ -168,19 +169,35 @@ export function AuthStep({
     return url.pathname + url.search;
   };
 
-  async function sendLink(e: React.FormEvent) {
-    e.preventDefault();
+  async function sendCode(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!signingIn && !terms) {
       setError("Please agree to the Terms and Privacy Policy.");
       return;
     }
     setStatus("sending");
     setError(null);
-    const { error: err } = await signIn.magicLink({ email, callbackURL: callbackURL() });
+    const { error: err } = await authClient.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
     if (err) {
       setStatus("error");
-      setError(err.message ?? "Could not send the link. Please try again.");
-    } else setStatus("sent");
+      setError(err.status === 429 ? "Too many codes requested. Please wait a few minutes and try again." : (err.message ?? "Could not send the code. Please try again."));
+    } else {
+      setCode("");
+      setStatus("sent");
+    }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("verifying");
+    setError(null);
+    const { error: err } = await signIn.emailOtp({ email, otp: code.trim() });
+    if (err) {
+      setStatus("sent");
+      setError(err.status === 403 ? "Too many wrong tries. Send a new code." : "That code is wrong or has expired. Check the email or send a new code.");
+      return;
+    }
+    window.location.assign(callbackURL());
   }
 
   async function google() {
@@ -202,14 +219,47 @@ export function AuthStep({
           {action ? headlines[topic].replace("this vendor", action.name) : headlines[topic]}
         </h2>
       )}
-      {status === "sent" ? (
-        <p className="mt-4 text-sm text-muted" role="status">
-          Check <strong className="text-foreground">{email}</strong> for your sign-in link. It expires in 10 minutes.
-        </p>
+      {status === "sent" || status === "verifying" ? (
+        <form onSubmit={verifyCode} className="mt-4 space-y-3">
+          <p className="text-sm text-muted" role="status">
+            We emailed a 6-digit code to <strong className="text-foreground">{email}</strong>. Enter it below. It expires in 10 minutes.
+          </p>
+          <label htmlFor="gate-code" className="sr-only">6-digit code</label>
+          <input
+            id="gate-code"
+            required
+            autoFocus
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            placeholder="123456"
+            className="w-full rounded-full border border-border bg-white px-4 py-3 text-center text-lg tracking-[0.4em]"
+          />
+          <button type="submit" disabled={status === "verifying" || code.length !== 6} className="w-full rounded-lg btn-coral px-4 py-3 text-sm disabled:opacity-60">
+            {status === "verifying" ? "Signing in…" : signingIn ? "Sign in" : "Create my account"}
+          </button>
+          <p className="text-center text-sm text-muted">
+            <button type="button" onClick={() => sendCode()} className="font-medium text-accent underline underline-offset-2">Send a new code</button>
+            {" · "}
+            <button
+              type="button"
+              onClick={() => {
+                setStatus("idle");
+                setError(null);
+              }}
+              className="font-medium text-accent underline underline-offset-2"
+            >
+              Use a different email
+            </button>
+          </p>
+        </form>
       ) : (
         <>
           <p className={hideHeading ? "text-sm text-muted" : "mt-2 text-sm text-muted"}>
-            {signingIn ? "We'll email you a sign-in link. No password needed." : "Takes 30 seconds. No password needed."}
+            {signingIn ? "We'll email you a 6-digit code. No password needed." : "Takes 30 seconds. No password needed."}
           </p>
           {signingIn ? null : (
             <div className="mt-5 space-y-3 text-sm">
@@ -243,7 +293,7 @@ export function AuthStep({
           ) : (
             <div className="mt-5" />
           )}
-          <form onSubmit={sendLink} className="space-y-3">
+          <form onSubmit={sendCode} className="space-y-3">
             <label htmlFor="gate-email" className="sr-only">Email</label>
             <input
               id="gate-email"
@@ -260,7 +310,7 @@ export function AuthStep({
               disabled={status === "sending"}
               className="w-full rounded-lg btn-coral px-4 py-3 text-sm disabled:opacity-60"
             >
-              {status === "sending" ? "Sending…" : "Email me a sign-in link"}
+              {status === "sending" ? "Sending…" : "Email me a code"}
             </button>
           </form>
           <p className="mt-4 text-center text-sm text-muted">

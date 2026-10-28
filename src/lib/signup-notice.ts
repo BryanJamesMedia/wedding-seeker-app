@@ -27,7 +27,7 @@ export async function notifyNewSignup(userId: string): Promise<void> {
     ["Account type", kind === "vendor" ? "Vendor / venue" : "Couple"],
     ["Email", user.email],
     ["Name", user.name || "Not provided"],
-    ["Signed up with", user.google ? "Google" : "Email link"],
+    ["Signed up with", user.google ? "Google" : "Email code"],
     ["Signed up", `${when} ET`],
   ];
   if (kind === "couple") {
