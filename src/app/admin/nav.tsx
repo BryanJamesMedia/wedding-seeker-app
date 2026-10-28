@@ -7,6 +7,7 @@ const ITEMS = [
   ["/admin", "Overview", null],
   ["/admin/couples", "Couples", null],
   ["/admin/vendors", "Vendors", null],
+  ["/admin/listings", "Listings", null],
   ["/admin/claims", "Claim Requests", "claims"],
   ["/admin/add-requests", "Add Requests", "adds"],
   ["/admin/connections", "Connection Requests", null],
