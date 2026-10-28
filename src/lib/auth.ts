@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { magicLink } from "better-auth/plugins";
+import { APIError, createAuthMiddleware } from "better-auth/api";
+import { emailOTP } from "better-auth/plugins";
 import { pool } from "@/db";
-import { sendMagicLinkEmail } from "./email";
+import { sendSignInCodeEmail } from "./email";
+import { isRateLimited } from "./rate-limit";
 
 function trustedOrigins(): string[] {
   return [
@@ -59,14 +61,30 @@ export const auth = betterAuth({
       }
     : undefined,
   rateLimit: { enabled: true, window: 60, max: 30 },
+  hooks: {
+    // Per-address cap (the plugin's own limit is per IP), checked before the code is created.
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/email-otp/send-verification-otp" || typeof ctx.body?.email !== "string") return;
+      if (await isRateLimited(`sign-in-code:${ctx.body.email.trim().toLowerCase()}`, 3, 60 * 60 * 1000)) {
+        throw new APIError("TOO_MANY_REQUESTS", { message: "Too many codes sent to this email. Please try again in an hour." });
+      }
+    }),
+  },
   plugins: [
-    magicLink({
+    // A 6-digit code typed into the same tab, not a link: email security scanners that open
+    // every link in an inbox can't sign in (or create accounts) for the addresses bots enter.
+    emailOTP({
+      otpLength: 6,
       expiresIn: 60 * 10,
-      sendMagicLink: async ({ email, url }) => {
+      allowedAttempts: 5,
+      storeOTP: "hashed",
+      rateLimit: { window: 60, max: 3 },
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        if (type !== "sign-in") return;
         if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") {
-          console.log(`[auth] magic link for ${email}: ${url}`);
+          console.log(`[auth] sign-in code for ${email}: ${otp}`);
         }
-        await sendMagicLinkEmail(email, url);
+        await sendSignInCodeEmail(email, otp);
       },
     }),
     nextCookies(),

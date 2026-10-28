@@ -96,7 +96,7 @@ export async function listCouples(): Promise<TableRow[]> {
     email: r.email,
     phone: r.contact_phone,
     signed_up: iso(r.created_at),
-    method: r.google ? "Google" : "Email link",
+    method: r.google ? "Google" : "Email code",
     complete: r.has_profile && missingWeddingFields(r).length === 0 ? "Yes" : "No",
     wedding: weddingWhen(r as Parameters<typeof weddingWhen>[0]),
     wedding_sort: whenSort(r),
