@@ -44,6 +44,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           initial={{
             listingType: params.listingType,
             categories: params.categories,
+            venueTypes: params.venueTypes,
             location: params.location,
             radius: params.radius,
             description: params.description,

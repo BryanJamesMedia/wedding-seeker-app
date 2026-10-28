@@ -122,17 +122,6 @@ export const DEFAULT_FILTERS: FilterDef[] = [
     unit: "guests",
   },
   {
-    key: "setting",
-    label: "Setting",
-    input: "multiselect",
-    categories: ["venue"],
-    source: { kind: "any_of_text", columns: ["venue_type"] },
-    options: ["beach", "garden", "ballroom", "barn", "waterfront", "historic", "rooftop"].map((v) => ({
-      value: v,
-      label: v[0].toUpperCase() + v.slice(1),
-    })),
-  },
-  {
     key: "indoor_outdoor",
     label: "Indoor / outdoor",
     input: "select",
