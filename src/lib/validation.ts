@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WEDDING_VENUE_TYPE_VALUES } from "./venue-types";
 
 export const WeddingProfileSchema = z.object({
   partner1_name: z.string().max(100).nullish(),
@@ -14,4 +15,7 @@ export const WeddingProfileSchema = z.object({
   vendors_needed: z.array(z.string().max(40)).max(20).optional(),
   settings: z.array(z.string().max(40)).max(10).optional(),
   vibe: z.string().max(500).nullish(),
+  radius_miles: z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)]).nullish(),
+  date_text: z.string().max(100).nullish(),
+  venue_types: z.array(z.enum(WEDDING_VENUE_TYPE_VALUES)).max(16).optional(),
 });

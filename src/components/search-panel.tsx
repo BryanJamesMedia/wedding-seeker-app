@@ -254,7 +254,7 @@ export function SearchPanel({
   );
 }
 
-function SelectedTags({
+export function SelectedTags({
   label,
   items,
   labelOf,
@@ -285,7 +285,7 @@ function SelectedTags({
   );
 }
 
-function CategoryPicker({
+export function CategoryPicker({
   labelledBy,
   options,
   selected,
@@ -293,6 +293,7 @@ function CategoryPicker({
   labelOf = categoryLabel,
   noun = "categories",
   sortByLabel = true,
+  placeholder,
 }: {
   labelledBy: string;
   options: string[];
@@ -301,6 +302,7 @@ function CategoryPicker({
   labelOf?: (value: string) => string;
   noun?: string;
   sortByLabel?: boolean;
+  placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
@@ -329,7 +331,7 @@ function CategoryPicker({
   const sorted = sortByLabel ? [...options].sort((a, b) => labelOf(a).localeCompare(labelOf(b))) : options;
   const shown = sorted.filter((o) => labelOf(o).toLowerCase().includes(filter.trim().toLowerCase()));
   const summary =
-    selected.length === 0 ? `All ${noun}` : selected.length === 1 ? labelOf(selected[0]) : `${selected.length} ${noun} selected`;
+    selected.length === 0 ? (placeholder ?? `All ${noun}`) : selected.length === 1 ? labelOf(selected[0]) : `${selected.length} ${noun} selected`;
 
   return (
     <div ref={ref} className="relative">

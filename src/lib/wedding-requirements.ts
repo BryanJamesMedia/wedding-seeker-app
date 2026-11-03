@@ -1,6 +1,7 @@
 /** Wedding details a couple must fill out in My Wedding before they can connect with vendors. */
 export type WeddingFields = Partial<Record<
-  "partner1_name" | "partner2_name" | "contact_email" | "contact_phone" | "wedding_date" | "target_month" | "target_year" | "location_text" | "guest_count" | "budget_range",
+  | "partner1_name" | "partner2_name" | "contact_email" | "contact_phone" | "wedding_date" | "target_month" | "target_year"
+  | "date_text" | "location_text" | "guest_count" | "budget_range" | "vibe",
   unknown
 >>;
 
@@ -11,10 +12,14 @@ const RULES: { label: string; ok: (p: WeddingFields) => boolean }[] = [
   { label: "Partner's name", ok: (p) => filled(p.partner2_name) },
   { label: "Contact email", ok: (p) => filled(p.contact_email) },
   { label: "Contact phone", ok: (p) => filled(p.contact_phone) },
-  { label: "Wedding date (or month and year)", ok: (p) => filled(p.wedding_date) || (filled(p.target_month) && filled(p.target_year)) },
+  {
+    label: "Wedding date (or when and year)",
+    ok: (p) => filled(p.wedding_date) || (filled(p.target_year) && (filled(p.date_text) || filled(p.target_month))),
+  },
   { label: "Location", ok: (p) => filled(p.location_text) },
   { label: "Guest count", ok: (p) => Number(p.guest_count) > 0 },
   { label: "Budget", ok: (p) => filled(p.budget_range) },
+  { label: "Wedding description", ok: (p) => filled(p.vibe) },
 ];
 
 /** Labels of the required fields that are still empty; [] means the couple can connect. */

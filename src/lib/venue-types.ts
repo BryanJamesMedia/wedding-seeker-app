@@ -23,5 +23,11 @@ export const VENUE_TYPE_GROUPS = [
 
 const LABELS = new Map<string, string>(VENUE_TYPE_GROUPS.map((g) => [g.value, g.label]));
 
+/** My Wedding venue choices: any of the groups, or "any" for no preference. */
+export const ANY_VENUE_TYPE = "any";
+export const WEDDING_VENUE_TYPE_VALUES = [ANY_VENUE_TYPE, ...VENUE_TYPE_GROUPS.map((g) => g.value)] as [string, ...string[]];
+
 export const isVenueTypeGroup = (value: string) => LABELS.has(value);
-export const venueTypeLabel = (value: string) => LABELS.get(value) ?? value;
+export const venueTypeLabel = (value: string) => (value === ANY_VENUE_TYPE ? "Any type" : (LABELS.get(value) ?? value));
+
+export const venueTypesText = (values: string[] | null | undefined) => (values?.length ? values.map(venueTypeLabel).join(", ") : null);

@@ -75,7 +75,8 @@ type CoupleRow = {
   id: string; name: string; email: string; created_at: Date; marketing_opt_in: boolean; google: boolean; has_profile: boolean;
   partner1_name: string | null; partner2_name: string | null; contact_email: string | null; contact_phone: string | null;
   wedding_date: string | null; target_month: number | null; target_year: number | null; location_text: string | null;
-  guest_count: number | null; budget_range: string | null; requests: number; saves: number;
+  guest_count: number | null; budget_range: string | null; date_text: string | null; vibe: string | null;
+  requests: number; saves: number;
 };
 
 export async function listCouples(): Promise<TableRow[]> {
@@ -83,7 +84,7 @@ export async function listCouples(): Promise<TableRow[]> {
     `SELECT u.id, u.name, u.email, u.created_at, u.marketing_opt_in,
        EXISTS (SELECT 1 FROM accounts a WHERE a.user_id = u.id AND a.provider_id = 'google') AS google,
        w.user_id IS NOT NULL AS has_profile, w.partner1_name, w.partner2_name, w.contact_email, w.contact_phone,
-       w.wedding_date::text AS wedding_date, w.target_month, w.target_year, w.location_text, w.guest_count, w.budget_range,
+       w.wedding_date::text AS wedding_date, w.target_month, w.target_year, w.location_text, w.guest_count, w.budget_range, w.date_text, w.vibe,
        (SELECT count(*)::int FROM connection_requests c WHERE c.user_id = u.id) AS requests,
        (SELECT count(*)::int FROM saved_listings s WHERE s.user_id = u.id) AS saves
      FROM users u LEFT JOIN wedding_profiles w ON w.user_id = u.id
