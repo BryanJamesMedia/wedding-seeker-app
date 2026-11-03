@@ -9,7 +9,8 @@ import { resolveLocation, type ResolvedLocation } from "./location";
 import { listingKey, mainPhotos } from "./photos";
 import { isVenueTypeGroup, venueTypeLabel } from "./venue-types";
 
-export const RADIUS_OPTIONS = [10, 25, 50, 100] as const;
+import { RADIUS_OPTIONS } from "./search-constants";
+export { RADIUS_OPTIONS };
 export const SORT_OPTIONS = ["best", "distance", "rating"] as const;
 export type SortOption = (typeof SORT_OPTIONS)[number];
 const METERS_PER_MILE = 1609.344;

@@ -20,6 +20,9 @@ export type LeadSnapshot = {
   settings?: string[];
   vibe?: string | null;
   vendors_needed?: string[];
+  radius_miles?: number | null;
+  date_text?: string | null;
+  venue_types?: string[];
 };
 
 export type Lead = {

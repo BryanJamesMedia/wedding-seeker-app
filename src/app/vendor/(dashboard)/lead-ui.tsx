@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { categoryLabel } from "@/lib/categories";
-import { weddingWhen } from "@/lib/connections";
+import { weddingLocation, weddingWhen } from "@/lib/connections";
+import { venueTypesText } from "@/lib/venue-types";
 import type { Lead, LeadSnapshot } from "@/lib/leads";
 import { formatDate, formatMoney } from "@/lib/utils";
 
@@ -101,11 +102,12 @@ export function LeadDetails({ lead }: { lead: Lead }) {
   const rows: [string, React.ReactNode][] = [
     ["Couple", coupleName(s)],
     ["Wedding date", weddingLabel(s)],
-    ["Location", s.location_text],
+    ["Location", weddingLocation(s)],
     ["Guests", s.guest_count],
     ["Budget", s.budget_range],
     ["Setting", s.settings?.length ? s.settings.join(", ") : null],
     ["Vibe", s.vibe],
+    ["Venue type", venueTypesText(s.venue_types)],
     ["Also looking for", s.vendors_needed?.length ? s.vendors_needed.map(categoryLabel).join(", ") : null],
     ["Requested", formatDate(lead.created_at)],
     ["Listing", lead.listing_name],

@@ -7,6 +7,7 @@ import { listingHref } from "./search";
 import { signToken } from "./signing";
 import { getBalance, leadPrice } from "./leads";
 import { formatMoney } from "./utils";
+import { venueTypesText } from "./venue-types";
 import type { AppUser } from "./session";
 import type { ListingRef } from "./saves";
 
@@ -37,12 +38,16 @@ export type WeddingProfile = {
   settings: string[];
   vibe: string | null;
   vendors_needed: string[];
+  radius_miles: number | null;
+  date_text: string | null;
+  venue_types: string[];
 };
 
 export async function getWeddingProfile(userId: string): Promise<WeddingProfile | null> {
   return queryOne<WeddingProfile>(
     `SELECT partner1_name, partner2_name, contact_email, contact_phone, to_char(wedding_date, 'YYYY-MM-DD') AS wedding_date,
-       target_month, target_year, location_text, guest_count, budget_range, settings, vibe, vendors_needed
+       target_month, target_year, location_text, guest_count, budget_range, settings, vibe, vendors_needed,
+       radius_miles, date_text, venue_types
      FROM wedding_profiles WHERE user_id = $1`,
     [userId],
   );
@@ -51,23 +56,33 @@ export async function getWeddingProfile(userId: string): Promise<WeddingProfile 
 export async function upsertWeddingProfile(userId: string, p: Partial<WeddingProfile>) {
   await query(
     `INSERT INTO wedding_profiles (user_id, partner1_name, partner2_name, contact_email, contact_phone, wedding_date,
-       target_month, target_year, location_text, guest_count, budget_range, settings, vibe, vendors_needed)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,coalesce($12::text[],'{}'),$13,coalesce($14::text[],'{}'))
+       target_month, target_year, location_text, guest_count, budget_range, settings, vibe, vendors_needed, radius_miles, date_text, venue_types)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,coalesce($12::text[],'{}'),$13,coalesce($14::text[],'{}'),$15,$16,coalesce($17::text[],'{}'))
      ON CONFLICT (user_id) DO UPDATE SET partner1_name=$2, partner2_name=$3, contact_email=$4, contact_phone=$5,
        wedding_date=$6, target_month=$7, target_year=$8, location_text=$9, guest_count=$10, budget_range=$11,
-       settings=coalesce($12::text[],'{}'), vibe=$13, vendors_needed=coalesce($14::text[],'{}'), updated_at=now()`,
+       settings=coalesce($12::text[],'{}'), vibe=$13, vendors_needed=coalesce($14::text[],'{}'),
+       radius_miles=$15, date_text=$16, venue_types=coalesce($17::text[],'{}'), updated_at=now()`,
     [
       userId, p.partner1_name ?? null, p.partner2_name ?? null, p.contact_email ?? null, p.contact_phone ?? null,
       p.wedding_date || null, p.target_month ?? null, p.target_year ?? null, p.location_text ?? null,
       p.guest_count ?? null, p.budget_range ?? null, p.settings ?? null, p.vibe ?? null, p.vendors_needed ?? null,
+      p.radius_miles ?? null, p.date_text?.trim() || null, p.venue_types ?? null,
     ],
   );
 }
 
 export function weddingWhen(p: Partial<WeddingProfile>): string | null {
   if (p.wedding_date) return new Date(`${p.wedding_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const text = p.date_text?.trim();
+  if (text && p.target_year) return text.includes(String(p.target_year)) ? text : `${text} ${p.target_year}`;
+  if (text) return text;
   if (p.target_month && p.target_year) return new Date(p.target_year, p.target_month - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   return p.target_year ? String(p.target_year) : null;
+}
+
+export function weddingLocation(p: Partial<WeddingProfile>): string | null {
+  if (!p.location_text) return null;
+  return p.radius_miles ? `${p.location_text} (within ${p.radius_miles} miles)` : p.location_text;
 }
 
 type ConnectListing = {
@@ -175,11 +190,12 @@ async function sendVendorEmail(
   const rows: [string, string | null | undefined][] = [
     ["Couple", couple],
     ["Date", snapshot.when],
-    ["Location", snapshot.location_text],
+    ["Location", weddingLocation(snapshot)],
     ["Guests", snapshot.guest_count ? String(snapshot.guest_count) : null],
     ["Budget", snapshot.budget_range],
     ["Setting", snapshot.settings?.join(", ")],
     ["Vibe", snapshot.vibe],
+    ["Venue type", venueTypesText(snapshot.venue_types)],
     ["Also looking for", snapshot.vendors_needed?.map(categoryLabel).join(", ")],
   ];
   const table = rows
