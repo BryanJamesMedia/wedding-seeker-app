@@ -17,7 +17,7 @@ export default async function VendorOverview() {
         {([
           ["/vendor/requests", String(counts.open), "New connection requests"],
           ["/vendor/leads", String(counts.purchased), "Your leads"],
-          [null, formatMoney(balance), "Wallet balance"],
+          ["/vendor/wallet", formatMoney(balance), "Wallet balance"],
         ] as const).map(([href, value, label]) => {
           const body = (
             <>

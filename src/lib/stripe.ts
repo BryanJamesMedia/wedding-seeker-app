@@ -2,6 +2,7 @@ import "server-only";
 import Stripe from "stripe";
 import { query, queryOne } from "@/db";
 import { sendWelcomeEmail } from "./email";
+import { creditTopUp, WALLET_TOP_UP } from "./wallet";
 
 let client: Stripe | null = null;
 
@@ -43,12 +44,24 @@ async function markPaid(userId: string, fields: { customerId?: string | null; su
   if (before && before.plan_status !== "paid") void sendWelcomeEmail(before.email);
 }
 
+/** Credits a vendor's top-up when they return from Checkout, in case the webhook hasn't arrived yet. */
+export async function confirmTopUp(sessionId: string, userId: string): Promise<"paid" | "pending" | null> {
+  if (!process.env.STRIPE_SECRET_KEY || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return null;
+  const session = await stripe().checkout.sessions.retrieve(sessionId);
+  if (session.metadata?.purpose !== WALLET_TOP_UP || session.metadata.userId !== userId) return null;
+  return (await creditTopUp(session)) ? "paid" : "pending";
+}
+
 /** Webhook handler: the only place paid status is granted or removed. */
 export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.purpose === WALLET_TOP_UP) {
+        await creditTopUp(session);
+        return;
+      }
       const userId = session.client_reference_id ?? session.metadata?.userId;
       if (!userId || session.payment_status === "unpaid") return;
       const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;

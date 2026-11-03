@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -7,6 +8,7 @@ export function PurchaseButton({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsFunds, setNeedsFunds] = useState(false);
 
   async function purchase() {
     setBusy(true);
@@ -24,6 +26,7 @@ export function PurchaseButton({ requestId }: { requestId: string }) {
     }
     setBusy(false);
     setError(data.error ?? "Something went wrong. Please try again.");
+    setNeedsFunds(data.code === "insufficient_funds");
   }
 
   return (
@@ -32,6 +35,7 @@ export function PurchaseButton({ requestId }: { requestId: string }) {
         {busy ? "Purchasing…" : "Purchase Connection"}
       </button>
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+      {needsFunds ? <Link href="/vendor/wallet" className="inline-block text-sm font-medium text-accent underline">Add funds to your wallet</Link> : null}
     </div>
   );
 }
