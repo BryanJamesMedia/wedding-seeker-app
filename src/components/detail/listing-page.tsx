@@ -57,6 +57,10 @@ function jsonLd(listing: ListingDetail, type: "venue" | "vendor") {
       addressRegion: str(listing.state) ?? undefined,
     },
   };
+  const phone = str(listing.phone_1);
+  const website = str(listing.domain);
+  if (phone) data.telephone = phone;
+  if (website) data.sameAs = website.startsWith("http") ? website : `https://${website}`;
   const score = str(listing.review_score);
   const count = str(listing.review_count);
   if (listing.showRating && score && count && Number(count) > 0) {
@@ -221,9 +225,9 @@ export async function ListingPage({ type, params, searchParams }: { type: "venue
                 ),
               )}
             </ul>
-            {!viewer.paid ? (
+            {!viewer.paid && contact.some((c) => isLocked(c.value)) ? (
               <Link href={viewer.userId ? `/upgrade?return=${encodeURIComponent(listing.href)}` : `${listing.href}?signup=1`} className="mt-3 block rounded-lg btn-coral px-4 py-2 text-center text-sm">
-                Unlock contact details
+                Sign up free for the full address
               </Link>
             ) : null}
           </div>
