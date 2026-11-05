@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { categoryLabel } from "@/lib/categories";
-import { MapPin, Star } from "lucide-react";
+import { Globe, MapPin, Phone, Star } from "lucide-react";
 import { isLocked } from "@/lib/gating";
 import type { SearchResult } from "@/lib/search";
 import { ListingActions, type ActionViewer } from "./listing-actions";
@@ -54,9 +54,31 @@ export function ResultCard({
           ) : null}
         </p>
         {result.summary ? <p className="mt-1.5 line-clamp-2 text-sm">{result.summary}</p> : null}
-        <p className="mt-1.5 text-sm">
-          {isLocked(result.phone) ? <LockedValue label="Sign up free to see the phone number" /> : result.phone}
-        </p>
+        {result.phone || result.website ? (
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            {isLocked(result.phone) ? (
+              <LockedValue label="Sign up free to see the phone number" />
+            ) : result.phone ? (
+              <a href={`tel:${result.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-1">
+                <Phone className="size-3.5 text-muted" aria-hidden />
+                {result.phone}
+              </a>
+            ) : null}
+            {isLocked(result.website) ? (
+              <LockedValue label="Sign up free to see the website" />
+            ) : result.website ? (
+              <a
+                href={result.website.startsWith("http") ? result.website : `https://${result.website}`}
+                target="_blank"
+                rel="noopener nofollow"
+                className="inline-flex items-center gap-1 text-accent underline underline-offset-2"
+              >
+                <Globe className="size-3.5" aria-hidden />
+                Website
+              </a>
+            ) : null}
+          </p>
+        ) : null}
         <div className="mt-3">
           <ListingActions
             viewer={viewer}

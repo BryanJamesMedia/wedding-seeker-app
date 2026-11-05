@@ -384,7 +384,7 @@ export function PlanCard({
       </h2>
       <ul className="mt-4 space-y-2 text-sm">
         {[
-          "Phone, website and full address for every listing",
+          "Full address and social links for every listing",
           "Unlimited results and full photo galleries",
           "Save vendors and venues to your shortlist",
           "One-click Connect with your wedding details",
